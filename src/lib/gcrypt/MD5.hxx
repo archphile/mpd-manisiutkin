@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2018-2019 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,12 +37,12 @@
 
 template<typename T> struct ConstBuffer;
 
+namespace Gcrypt {
+
 gcc_pure
 std::array<uint8_t, 16>
 MD5(ConstBuffer<void> input) noexcept;
 
-gcc_pure
-StringBuffer<33>
-MD5Hex(ConstBuffer<void> input) noexcept;
+} // namespace Gcrypt
 
 #endif

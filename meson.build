@@ -5,7 +5,7 @@ project(
   meson_version: '>= 0.49.0',
   default_options: [
     'c_std=c99',
-    'cpp_std=c++14'
+    'cpp_std=c++17'
   ],
   license: 'GPLv2+',
 )
@@ -14,6 +14,12 @@ version_cxx = vcs_tag(input: 'src/GitVersion.cxx', output: 'GitVersion.cxx')
 
 compiler = meson.get_compiler('cpp')
 c_compiler = meson.get_compiler('c')
+
+if compiler.get_id() == 'gcc' and compiler.version().version_compare('<7')
+  warning('Your GCC version is too old.  You need at least version 7.')
+elif compiler.get_id() == 'clang' and compiler.version().version_compare('<4')
+  warning('Your clang version is too old.  You need at least version 4.')
+endif
 
 conf = configuration_data()
 conf.set_quoted('PACKAGE', meson.project_name())
@@ -292,6 +298,7 @@ sources = [
   'src/TagSave.cxx',
   'src/TagFile.cxx',
   'src/TagStream.cxx',
+  'src/TagAny.cxx',
   'src/TimePrint.cxx',
   'src/mixer/Volume.cxx',
   'src/PlaylistFile.cxx',
@@ -348,6 +355,8 @@ subdir('src/lib/sqlite')
 subdir('src/lib/systemd')
 subdir('src/lib/upnp')
 subdir('src/lib/yajl')
+
+subdir('src/lib/crypto')
 
 subdir('src/fs')
 subdir('src/config')

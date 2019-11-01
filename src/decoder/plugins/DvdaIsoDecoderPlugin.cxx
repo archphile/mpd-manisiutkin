@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2018 The Music Player Daemon Project
+ * Copyright (C) 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@
 #include "util/StringView.hxx"
 #include "util/FormatString.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriExtract.hxx"
 #include "util/Domain.hxx"
 #include "Log.hxx"
 
@@ -219,7 +219,7 @@ dvdaiso_finish() noexcept {
 static std::forward_list<DetachedSong>
 dvdaiso_container_scan(Path path_fs) {
 	std::forward_list<DetachedSong> list;
-	if (!dvdaiso_update_ifo(path_fs.c_str())) {
+	if (path_fs.IsNull() || !dvdaiso_update_ifo(path_fs.c_str())) {
 		return list;
 	}
 	TagBuilder tag_builder;
@@ -315,7 +315,7 @@ dvdaiso_file_decode(DecoderClient &client, Path path_fs) {
 		size_t pcm_size = pcm_data.size();
 		if (dvda_reader->read_frame(pcm_data.data(), &pcm_size)) {
 			if (pcm_size > 0) {
-				cmd = client.SubmitData(nullptr, pcm_data.data(), pcm_size, samplerate / 1000);
+				cmd = client.SubmitData(nullptr, pcm_data.data(), pcm_size, channels * samplerate / 1000);
 				if (cmd == DecoderCommand::STOP) {
 					break;
 				}
@@ -366,16 +366,9 @@ static const char* const dvdaiso_mime_types[] = {
 	nullptr
 };
 
-extern const struct DecoderPlugin dvdaiso_decoder_plugin;
-const struct DecoderPlugin dvdaiso_decoder_plugin = {
-	"dvdaiso",
-	dvdaiso_init,
-	dvdaiso_finish,
-	nullptr,
-	dvdaiso_file_decode,
-	dvdaiso_scan_file,
-	nullptr,
-	dvdaiso_container_scan,
-	dvdaiso_suffixes,
-	dvdaiso_mime_types,
-};
+constexpr DecoderPlugin dvdaiso_decoder_plugin =
+DecoderPlugin("dvdaiso", dvdaiso_file_decode, dvdaiso_scan_file)
+.WithInit(dvdaiso_init, dvdaiso_finish)
+.WithContainer(dvdaiso_container_scan)
+.WithSuffixes(dvdaiso_suffixes)
+.WithMimeTypes(dvdaiso_mime_types);

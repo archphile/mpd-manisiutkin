@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,11 +25,11 @@ Client::OnSocketError(std::exception_ptr ep) noexcept
 {
 	FormatError(ep, "error on client %d", num);
 
-	Close();
+	SetExpired();
 }
 
 void
 Client::OnSocketClosed() noexcept
 {
-	Close();
+	SetExpired();
 }

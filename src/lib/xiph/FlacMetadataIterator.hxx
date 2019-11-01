@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,14 +28,15 @@ class FlacMetadataIterator {
 	FLAC__Metadata_Iterator *iterator;
 
 public:
-	FlacMetadataIterator():iterator(::FLAC__metadata_iterator_new()) {}
+	FlacMetadataIterator() noexcept
+		:iterator(::FLAC__metadata_iterator_new()) {}
 
-	FlacMetadataIterator(FLAC__Metadata_Chain *chain)
+	explicit FlacMetadataIterator(FLAC__Metadata_Chain *chain) noexcept
 		:FlacMetadataIterator() {
 		::FLAC__metadata_iterator_init(iterator, chain);
 	}
 
-	~FlacMetadataIterator() {
+	~FlacMetadataIterator() noexcept {
 		::FLAC__metadata_iterator_delete(iterator);
 	}
 

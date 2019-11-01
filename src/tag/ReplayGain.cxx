@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,6 @@
 #include "util/NumberParser.hxx"
 
 #include <assert.h>
-#include <stdlib.h>
 
 template<typename T>
 static bool
@@ -71,14 +70,14 @@ ParseReplayGainTag(ReplayGainInfo &info, const char *name, const char *value)
 }
 
 bool
-ParseReplayGainVorbis(ReplayGainInfo &info, const char *entry)
+ParseReplayGainVorbis(ReplayGainInfo &info, StringView entry)
 {
 	struct VorbisCommentEntry {
-		const char *entry;
+		StringView entry;
 
 		gcc_pure
-		const char *operator[](const char *n) const noexcept {
-			return vorbis_comment_value(entry, n);
+		const char *operator[](StringView n) const noexcept {
+			return GetVorbisCommentValue(entry, n).data;
 		}
 	};
 

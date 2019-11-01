@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -79,7 +79,7 @@ path_in(const char *path, const char *possible_parent) noexcept
 }
 
 void
-InotifyQueue::Enqueue(const char *uri_utf8)
+InotifyQueue::Enqueue(const char *uri_utf8) noexcept
 {
 	delay_event.Schedule(INOTIFY_UPDATE_DELAY);
 

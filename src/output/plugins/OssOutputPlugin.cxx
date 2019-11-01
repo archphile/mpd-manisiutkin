@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,10 +24,10 @@
 #include "system/Error.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/Domain.hxx"
-#include "util/Macros.hxx"
 #include "util/ByteOrder.hxx"
 #include "Log.hxx"
 
+#include <iterator>
 #include <stdexcept>
 
 #include <sys/stat.h>
@@ -54,7 +54,7 @@
 #endif
 
 #ifdef AFMT_S24_PACKED
-#include "pcm/PcmExport.hxx"
+#include "pcm/Export.hxx"
 #include "util/Manual.hxx"
 #endif
 
@@ -120,11 +120,11 @@ private:
 	/**
 	 * Reopen the device with the saved audio_format, without any probing.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void Reopen();
 
-	void DoClose();
+	void DoClose() noexcept;
 };
 
 static constexpr Domain oss_output_domain("oss_output");
@@ -138,7 +138,7 @@ enum oss_stat {
 };
 
 static enum oss_stat
-oss_stat_device(const char *device, int *errno_r)
+oss_stat_device(const char *device, int *errno_r) noexcept
 {
 	struct stat st;
 
@@ -166,9 +166,9 @@ oss_stat_device(const char *device, int *errno_r)
 static const char *const default_devices[] = { "/dev/sound/dsp", "/dev/dsp" };
 
 static bool
-oss_output_test_default_device(void)
+oss_output_test_default_device() noexcept
 {
-	for (int i = ARRAY_SIZE(default_devices); --i >= 0; ) {
+	for (int i = std::size(default_devices); --i >= 0; ) {
 		UniqueFileDescriptor fd;
 		if (fd.Open(default_devices[i], O_WRONLY, 0))
 			return true;
@@ -184,16 +184,16 @@ oss_output_test_default_device(void)
 static OssOutput *
 oss_open_default()
 {
-	int err[ARRAY_SIZE(default_devices)];
-	enum oss_stat ret[ARRAY_SIZE(default_devices)];
+	int err[std::size(default_devices)];
+	enum oss_stat ret[std::size(default_devices)];
 
-	for (int i = ARRAY_SIZE(default_devices); --i >= 0; ) {
+	for (int i = std::size(default_devices); --i >= 0; ) {
 		ret[i] = oss_stat_device(default_devices[i], &err[i]);
 		if (ret[i] == OSS_STAT_NO_ERROR)
 			return new OssOutput(default_devices[i]);
 	}
 
-	for (int i = ARRAY_SIZE(default_devices); --i >= 0; ) {
+	for (int i = std::size(default_devices); --i >= 0; ) {
 		const char *dev = default_devices[i];
 		switch(ret[i]) {
 		case OSS_STAT_NO_ERROR:
@@ -231,26 +231,20 @@ OssOutput::Create(EventLoop &, const ConfigBlock &block)
 }
 
 void
-OssOutput::DoClose()
+OssOutput::DoClose() noexcept
 {
 	if (fd.IsDefined())
 		fd.Close();
 }
 
 /**
- * A tri-state type for oss_try_ioctl().
+ * Invoke an ioctl on the OSS file descriptor.
+ *
+ * Throws on error.
+ *
+ * @return true success, false if the parameter is not supported
  */
-enum oss_setup_result {
-	SUCCESS,
-	UNSUPPORTED,
-};
-
-/**
- * Invoke an ioctl on the OSS file descriptor.  On success, SUCCESS is
- * returned.  If the parameter is not supported, UNSUPPORTED is
- * returned.  Any other failure throws std::runtime_error.
- */
-static enum oss_setup_result
+static bool
 oss_try_ioctl_r(FileDescriptor fd, unsigned long request, int *value_r,
 		const char *msg)
 {
@@ -260,20 +254,22 @@ oss_try_ioctl_r(FileDescriptor fd, unsigned long request, int *value_r,
 
 	int ret = ioctl(fd.Get(), request, value_r);
 	if (ret >= 0)
-		return SUCCESS;
+		return true;
 
 	if (errno == EINVAL)
-		return UNSUPPORTED;
+		return false;
 
 	throw MakeErrno(msg);
 }
 
 /**
- * Invoke an ioctl on the OSS file descriptor.  On success, SUCCESS is
- * returned.  If the parameter is not supported, UNSUPPORTED is
- * returned.  Any other failure throws std::runtime_error.
+ * Invoke an ioctl on the OSS file descriptor.
+ *
+ * Throws on error.
+ *
+ * @return true success, false if the parameter is not supported
  */
-static enum oss_setup_result
+static bool
 oss_try_ioctl(FileDescriptor fd, unsigned long request, int value,
 	      const char *msg)
 {
@@ -284,25 +280,18 @@ oss_try_ioctl(FileDescriptor fd, unsigned long request, int value,
  * Set up the channel number, and attempts to find alternatives if the
  * specified number is not supported.
  *
- * Throws #std::runtime_error on error.
+ * Throws on error.
  */
 static void
 oss_setup_channels(FileDescriptor fd, AudioFormat &audio_format)
 {
 	const char *const msg = "Failed to set channel count";
 	int channels = audio_format.channels;
-	enum oss_setup_result result =
-		oss_try_ioctl_r(fd, SNDCTL_DSP_CHANNELS, &channels, msg);
-	switch (result) {
-	case SUCCESS:
-		if (!audio_valid_channel_count(channels))
-		    break;
 
+	if (oss_try_ioctl_r(fd, SNDCTL_DSP_CHANNELS, &channels, msg) &&
+	    audio_valid_channel_count(channels)) {
 		audio_format.channels = channels;
 		return;
-
-	case UNSUPPORTED:
-		break;
 	}
 
 	for (unsigned i = 1; i < 2; ++i) {
@@ -311,18 +300,10 @@ oss_setup_channels(FileDescriptor fd, AudioFormat &audio_format)
 			continue;
 
 		channels = i;
-		result = oss_try_ioctl_r(fd, SNDCTL_DSP_CHANNELS, &channels,
-					 msg);
-		switch (result) {
-		case SUCCESS:
-			if (!audio_valid_channel_count(channels))
-			    break;
-
+		if (oss_try_ioctl_r(fd, SNDCTL_DSP_CHANNELS, &channels, msg) &&
+		    audio_valid_channel_count(channels)) {
 			audio_format.channels = channels;
 			return;
-
-		case UNSUPPORTED:
-			break;
 		}
 	}
 
@@ -333,26 +314,18 @@ oss_setup_channels(FileDescriptor fd, AudioFormat &audio_format)
  * Set up the sample rate, and attempts to find alternatives if the
  * specified sample rate is not supported.
  *
- * Throws #std::runtime_error on error.
+ * Throws on error.
  */
 static void
 oss_setup_sample_rate(FileDescriptor fd, AudioFormat &audio_format)
 {
 	const char *const msg = "Failed to set sample rate";
 	int sample_rate = audio_format.sample_rate;
-	enum oss_setup_result result =
-		oss_try_ioctl_r(fd, SNDCTL_DSP_SPEED, &sample_rate,
-				msg);
-	switch (result) {
-	case SUCCESS:
-		if (!audio_valid_sample_rate(sample_rate))
-			break;
 
+	if (oss_try_ioctl_r(fd, SNDCTL_DSP_SPEED, &sample_rate, msg) &&
+	    audio_valid_sample_rate(sample_rate)) {
 		audio_format.sample_rate = sample_rate;
 		return;
-
-	case UNSUPPORTED:
-		break;
 	}
 
 	static constexpr int sample_rates[] = { 48000, 44100, 0 };
@@ -361,18 +334,10 @@ oss_setup_sample_rate(FileDescriptor fd, AudioFormat &audio_format)
 		if (sample_rate == (int)audio_format.sample_rate)
 			continue;
 
-		result = oss_try_ioctl_r(fd, SNDCTL_DSP_SPEED, &sample_rate,
-					 msg);
-		switch (result) {
-		case SUCCESS:
-			if (!audio_valid_sample_rate(sample_rate))
-				break;
-
+		if (oss_try_ioctl_r(fd, SNDCTL_DSP_SPEED, &sample_rate, msg) &&
+		    audio_valid_sample_rate(sample_rate)) {
 			audio_format.sample_rate = sample_rate;
 			return;
-
-		case UNSUPPORTED:
-			break;
 		}
 	}
 
@@ -456,10 +421,11 @@ sample_format_from_oss(int format) noexcept
 /**
  * Probe one sample format.
  *
- * @return the selected sample format or SampleFormat::UNDEFINED on
- * error
+ * Throws on error.
+ *
+ * @return true success, false if the parameter is not supported
  */
-static enum oss_setup_result
+static bool
 oss_probe_sample_format(FileDescriptor fd, SampleFormat sample_format,
 			SampleFormat *sample_format_r,
 			int *oss_format_r
@@ -470,30 +436,30 @@ oss_probe_sample_format(FileDescriptor fd, SampleFormat sample_format,
 {
 	int oss_format = sample_format_to_oss(sample_format);
 	if (oss_format == AFMT_QUERY)
-		return UNSUPPORTED;
+		return false;
 
-	enum oss_setup_result result =
+	bool success =
 		oss_try_ioctl_r(fd, SNDCTL_DSP_SAMPLESIZE,
 				&oss_format,
 				"Failed to set sample format");
 
 #ifdef AFMT_S24_PACKED
-	if (result == UNSUPPORTED && sample_format == SampleFormat::S24_P32) {
+	if (!success && sample_format == SampleFormat::S24_P32) {
 		/* if the driver doesn't support padded 24 bit, try
 		   packed 24 bit */
 		oss_format = AFMT_S24_PACKED;
-		result = oss_try_ioctl_r(fd, SNDCTL_DSP_SAMPLESIZE,
-					 &oss_format,
-					 "Failed to set sample format");
+		success = oss_try_ioctl_r(fd, SNDCTL_DSP_SAMPLESIZE,
+					  &oss_format,
+					  "Failed to set sample format");
 	}
 #endif
 
-	if (result != SUCCESS)
-		return result;
+	if (!success)
+		return false;
 
 	sample_format = sample_format_from_oss(oss_format);
 	if (sample_format == SampleFormat::UNDEFINED)
-		return UNSUPPORTED;
+		return false;
 
 	*sample_format_r = sample_format;
 	*oss_format_r = oss_format;
@@ -508,7 +474,7 @@ oss_probe_sample_format(FileDescriptor fd, SampleFormat sample_format,
 	pcm_export.Open(sample_format, 0, params);
 #endif
 
-	return SUCCESS;
+	return true;
 }
 
 /**
@@ -524,20 +490,14 @@ oss_setup_sample_format(FileDescriptor fd, AudioFormat &audio_format,
 			)
 {
 	SampleFormat mpd_format;
-	enum oss_setup_result result =
-		oss_probe_sample_format(fd, audio_format.format,
-					&mpd_format, oss_format_r
+	if (oss_probe_sample_format(fd, audio_format.format,
+				    &mpd_format, oss_format_r
 #ifdef AFMT_S24_PACKED
-					, pcm_export
+				    , pcm_export
 #endif
-					);
-	switch (result) {
-	case SUCCESS:
+				    )) {
 		audio_format.format = mpd_format;
 		return;
-
-	case UNSUPPORTED:
-		break;
 	}
 
 	/* the requested sample format is not available - probe for
@@ -557,19 +517,14 @@ oss_setup_sample_format(FileDescriptor fd, AudioFormat &audio_format,
 			/* don't try that again */
 			continue;
 
-		result = oss_probe_sample_format(fd, mpd_format,
-						 &mpd_format, oss_format_r
+		if (oss_probe_sample_format(fd, mpd_format,
+					    &mpd_format, oss_format_r
 #ifdef AFMT_S24_PACKED
-						 , pcm_export
+					    , pcm_export
 #endif
-						 );
-		switch (result) {
-		case SUCCESS:
+					    )) {
 			audio_format.format = mpd_format;
 			return;
-
-		case UNSUPPORTED:
-			break;
 		}
 	}
 
@@ -599,32 +554,20 @@ try {
 	if (!fd.Open(device, O_WRONLY))
 		throw FormatErrno("Error opening OSS device \"%s\"", device);
 
-	enum oss_setup_result result;
-
 	const char *const msg1 = "Failed to set channel count";
-	result = oss_try_ioctl(fd, SNDCTL_DSP_CHANNELS,
-			       audio_format.channels, msg1);
-	if (result != SUCCESS) {
-		DoClose();
+	if (!oss_try_ioctl(fd, SNDCTL_DSP_CHANNELS,
+			   audio_format.channels, msg1))
 		throw std::runtime_error(msg1);
-	}
 
 	const char *const msg2 = "Failed to set sample rate";
-	result = oss_try_ioctl(fd, SNDCTL_DSP_SPEED,
-			       audio_format.sample_rate, msg2);
-	if (result != SUCCESS) {
-		DoClose();
+	if (!oss_try_ioctl(fd, SNDCTL_DSP_SPEED,
+			   audio_format.sample_rate, msg2))
 		throw std::runtime_error(msg2);
-	}
 
 	const char *const msg3 = "Failed to set sample format";
-	result = oss_try_ioctl(fd, SNDCTL_DSP_SAMPLESIZE,
-			       oss_format,
-			       msg3);
-	if (result != SUCCESS) {
-		DoClose();
+	if (!oss_try_ioctl(fd, SNDCTL_DSP_SAMPLESIZE,
+			   oss_format, msg3))
 		throw std::runtime_error(msg3);
-	}
 } catch (...) {
 	DoClose();
 	throw;
@@ -670,17 +613,18 @@ OssOutput::Play(const void *chunk, size_t size)
 
 #ifdef AFMT_S24_PACKED
 	const auto e = pcm_export->Export({chunk, size});
+	if (e.empty())
+		return size;
+
 	chunk = e.data;
 	size = e.size;
 #endif
-
-	assert(size > 0);
 
 	while (true) {
 		ret = fd.Write(chunk, size);
 		if (ret > 0) {
 #ifdef AFMT_S24_PACKED
-			ret = pcm_export->CalcSourceSize(ret);
+			ret = pcm_export->CalcInputSize(ret);
 #endif
 			return ret;
 		}

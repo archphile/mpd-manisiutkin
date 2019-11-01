@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@ class PreparedFilter;
  * "name1, name2, name3, ..." by looking up each name among the
  * configured filter sections.
  *
- * Throws std::runtime_error on error.
+ * Throws on error.
  *
  * @param chain the chain to append filters on
  * @param config the global configuration to load filter definitions from

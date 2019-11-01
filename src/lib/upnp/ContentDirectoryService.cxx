@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,10 +21,11 @@
 #include "UniqueIxml.hxx"
 #include "Device.hxx"
 #include "ixmlwrap.hxx"
-#include "Action.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriRelative.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/SplitString.hxx"
+
+#include <upnptools.h>
 
 ContentDirectoryService::ContentDirectoryService(const UPnPDevice &device,
 						 const UPnPService &service) noexcept

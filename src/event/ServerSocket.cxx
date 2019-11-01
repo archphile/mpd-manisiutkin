@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@
 #include "net/IPv6Address.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
-#include "net/SocketAddress.hxx"
 #include "net/SocketUtil.hxx"
 #include "net/SocketError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
@@ -37,7 +36,7 @@
 #include "Log.hxx"
 
 #include <string>
-#include <algorithm>
+#include <utility>
 
 #include <assert.h>
 

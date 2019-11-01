@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,10 +20,10 @@
 #include "PlaylistStream.hxx"
 #include "PlaylistRegistry.hxx"
 #include "SongEnumerator.hxx"
-#include "util/UriUtil.hxx"
 #include "input/InputStream.hxx"
 #include "input/LocalOpen.hxx"
 #include "fs/Path.hxx"
+#include "util/UriExtract.hxx"
 #include "Log.hxx"
 
 #include <exception>

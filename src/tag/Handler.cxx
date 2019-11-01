@@ -20,7 +20,6 @@
 #include "Handler.hxx"
 #include "Builder.hxx"
 #include "AudioFormat.hxx"
-#include "util/ASCII.hxx"
 #include "util/CharUtil.hxx"
 #include "util/StringView.hxx"
 
@@ -33,6 +32,11 @@ NullTagHandler::OnTag(TagType, StringView) noexcept
 
 void
 NullTagHandler::OnPair(StringView, StringView) noexcept
+{
+}
+
+void
+NullTagHandler::OnPicture(const char *, ConstBuffer<void>) noexcept
 {
 }
 

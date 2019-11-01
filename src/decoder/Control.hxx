@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -111,13 +111,6 @@ private:
 	bool quit;
 
 public:
-	/**
-	 * Is the client currently waiting for the DecoderThread?  If
-	 * false, the DecoderThread may omit invoking Cond::signal(),
-	 * reducing the number of system calls.
-	 */
-	bool client_is_waiting = false;
-
 	bool seek_error;
 	bool seekable;
 	SongTime seek_time;
@@ -222,7 +215,9 @@ public:
 	 *
 	 * Caller must hold the lock.
 	 */
-	void WaitForDecoder(std::unique_lock<Mutex> &lock) noexcept;
+	void WaitForDecoder(std::unique_lock<Mutex> &lock) noexcept {
+		client_cond.wait(lock);
+	}
 
 	bool IsIdle() const noexcept {
 		return state == DecoderState::STOP ||
@@ -309,6 +304,11 @@ public:
 	 */
 	gcc_pure
 	bool IsCurrentSong(const DetachedSong &_song) const noexcept;
+
+	gcc_pure
+	bool IsUnseekableCurrentSong(const DetachedSong &_song) const noexcept {
+		return !seekable && IsCurrentSong(_song);
+	}
 
 	gcc_pure
 	bool IsSeekableCurrentSong(const DetachedSong &_song) const noexcept {

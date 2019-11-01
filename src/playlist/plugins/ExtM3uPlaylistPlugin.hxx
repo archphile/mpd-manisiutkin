@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,6 @@
 #ifndef MPD_EXTM3U_PLAYLIST_PLUGIN_HXX
 #define MPD_EXTM3U_PLAYLIST_PLUGIN_HXX
 
-extern const struct playlist_plugin extm3u_playlist_plugin;
+extern const struct PlaylistPlugin extm3u_playlist_plugin;
 
 #endif

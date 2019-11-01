@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -113,6 +113,14 @@ public:
 	gcc_pure
 	AudioOutputControl *FindByName(const char *name) noexcept;
 
+	/**
+	 * Does an audio output device with this name exist?
+	 */
+	gcc_pure
+	bool HasName(const char *name) noexcept {
+		return FindByName(name) != nullptr;
+	}
+
 	void SetReplayGainMode(ReplayGainMode mode) noexcept;
 
 	/**
@@ -147,6 +155,15 @@ public:
 	void SetSoftwareVolume(unsigned volume) noexcept;
 
 private:
+	/**
+	 * Was Open() called successfully?
+	 *
+	 * This method may only be called from the player thread.
+	 */
+	bool IsOpen() const noexcept {
+		return input_audio_format.IsDefined();
+	}
+
 	/**
 	 * Wait until all (active) outputs have finished the current
 	 * command.

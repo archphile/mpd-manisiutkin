@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,8 +29,6 @@
 #include "player/Control.hxx"
 #include "song/DetachedSong.hxx"
 #include "SongLoader.hxx"
-
-#include <memory>
 
 #include <stdlib.h>
 
@@ -354,7 +352,7 @@ playlist::MoveRange(PlayerControl &pc,
 			return;
 		to = (currentSong + abs(to)) % GetLength();
 		if (start < (unsigned)to)
-			to--;
+			to -= end - start;
 	}
 
 	queue.MoveRange(start, end, to);

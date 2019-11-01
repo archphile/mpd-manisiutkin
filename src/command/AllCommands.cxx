@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -41,14 +41,14 @@
 #include "Instance.hxx"
 #include "client/Client.hxx"
 #include "client/Response.hxx"
-#include "util/Macros.hxx"
 #include "util/Tokenizer.hxx"
 #include "util/StringAPI.hxx"
 
 #ifdef ENABLE_SQLITE
 #include "StickerCommands.hxx"
-#include "sticker/Database.hxx"
 #endif
+
+#include <iterator>
 
 #include <assert.h>
 #include <string.h>
@@ -168,6 +168,7 @@ static constexpr struct command commands[] = {
 	{ "rangeid", PERMISSION_ADD, 2, 2, handle_rangeid },
 	{ "readcomments", PERMISSION_READ, 1, 1, handle_read_comments },
 	{ "readmessages", PERMISSION_READ, 0, 0, handle_read_messages },
+	{ "readpicture", PERMISSION_READ, 2, 2, handle_read_picture },
 	{ "rename", PERMISSION_CONTROL, 2, 2, handle_rename },
 	{ "repeat", PERMISSION_CONTROL, 1, 1, handle_repeat },
 	{ "replay_gain_mode", PERMISSION_CONTROL, 1, 1,
@@ -209,11 +210,12 @@ static constexpr struct command commands[] = {
 	{ "volume", PERMISSION_CONTROL, 1, 1, handle_volume },
 };
 
-static constexpr unsigned num_commands = ARRAY_SIZE(commands);
+static constexpr unsigned num_commands = std::size(commands);
 
+gcc_pure
 static bool
 command_available(gcc_unused const Partition &partition,
-		  gcc_unused const struct command *cmd)
+		  gcc_unused const struct command *cmd) noexcept
 {
 #ifdef ENABLE_SQLITE
 	if (StringIsEqual(cmd->cmd, "sticker"))
@@ -240,7 +242,7 @@ command_available(gcc_unused const Partition &partition,
 
 static CommandResult
 PrintAvailableCommands(Response &r, const Partition &partition,
-		     unsigned permission)
+		     unsigned permission) noexcept
 {
 	for (unsigned i = 0; i < num_commands; ++i) {
 		const struct command *cmd = &commands[i];
@@ -254,7 +256,7 @@ PrintAvailableCommands(Response &r, const Partition &partition,
 }
 
 static CommandResult
-PrintUnavailableCommands(Response &r, unsigned permission)
+PrintUnavailableCommands(Response &r, unsigned permission) noexcept
 {
 	for (unsigned i = 0; i < num_commands; ++i) {
 		const struct command *cmd = &commands[i];
@@ -281,7 +283,7 @@ handle_not_commands(Client &client, gcc_unused Request request, Response &r)
 }
 
 void
-command_init()
+command_init() noexcept
 {
 #ifndef NDEBUG
 	/* ensure that the command list is sorted */
@@ -290,8 +292,9 @@ command_init()
 #endif
 }
 
+gcc_pure
 static const struct command *
-command_lookup(const char *name)
+command_lookup(const char *name) noexcept
 {
 	unsigned a = 0, b = num_commands, i;
 
@@ -313,7 +316,7 @@ command_lookup(const char *name)
 
 static bool
 command_check_request(const struct command *cmd, Response &r,
-		      unsigned permission, Request args)
+		      unsigned permission, Request args) noexcept
 {
 	if (cmd->permission != (permission & cmd->permission)) {
 		r.FormatError(ACK_ERROR_PERMISSION,
@@ -347,7 +350,7 @@ command_check_request(const struct command *cmd, Response &r,
 
 static const struct command *
 command_checked_lookup(Response &r, unsigned permission,
-		       const char *cmd_name, Request args)
+		       const char *cmd_name, Request args) noexcept
 {
 	const struct command *cmd = command_lookup(cmd_name);
 	if (cmd == nullptr) {
@@ -365,8 +368,8 @@ command_checked_lookup(Response &r, unsigned permission,
 }
 
 CommandResult
-command_process(Client &client, unsigned num, char *line)
-try {
+command_process(Client &client, unsigned num, char *line) noexcept
+{
 	Response r(client, num);
 
 	/* get the command name (first word on the line) */
@@ -394,34 +397,33 @@ try {
 	char *argv[COMMAND_ARGV_MAX];
 	Request args(argv, 0);
 
-	/* now parse the arguments (quoted or unquoted) */
+	try {
+		/* now parse the arguments (quoted or unquoted) */
 
-	while (true) {
-		if (args.size == COMMAND_ARGV_MAX) {
-			r.Error(ACK_ERROR_ARG, "Too many arguments");
-			return CommandResult::ERROR;
+		while (true) {
+			if (args.size == COMMAND_ARGV_MAX) {
+				r.Error(ACK_ERROR_ARG, "Too many arguments");
+				return CommandResult::ERROR;
+			}
+
+			char *a = tokenizer.NextParam();
+			if (a == nullptr)
+				break;
+
+			argv[args.size++] = a;
 		}
 
-		char *a = tokenizer.NextParam();
-		if (a == nullptr)
-			break;
+		/* look up and invoke the command handler */
 
-		argv[args.size++] = a;
+		const struct command *cmd =
+			command_checked_lookup(r, client.GetPermission(),
+					       cmd_name, args);
+		if (cmd == nullptr)
+			return CommandResult::ERROR;
+
+		return cmd->handler(client, args, r);
+	} catch (...) {
+		PrintError(r, std::current_exception());
+		return CommandResult::ERROR;
 	}
-
-	/* look up and invoke the command handler */
-
-	const struct command *cmd =
-		command_checked_lookup(r, client.GetPermission(),
-				       cmd_name, args);
-
-	CommandResult ret = cmd
-		? cmd->handler(client, args, r)
-		: CommandResult::ERROR;
-
-	return ret;
-} catch (const std::exception &e) {
-	Response r(client, num);
-	PrintError(r, std::current_exception());
-	return CommandResult::ERROR;
 }

@@ -1,6 +1,6 @@
 /*
 * MPD SACD Decoder plugin
-* Copyright (c) 2011-2014 Maxim V.Anisiutkin <maxim.anisiutkin@gmail.com>
+* Copyright (c) 2011-2019 Maxim V.Anisiutkin <maxim.anisiutkin@gmail.com>
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,10 @@
 #include "config.h"
 #include <string.h>
 #include <unistd.h>
-#include "lib/gcrypt/MD5.hxx"
+#include "lib/crypto/MD5.hxx"
 #include "util/ASCII.hxx"
 #include "sacd_metabase.h"
+#include <gcrypt.h>
 
 sacd_metabase_t::sacd_metabase_t(sacd_disc_t* sacd_disc, const char* tags_path, const char* tags_file) {
 	xmldoc = nullptr;

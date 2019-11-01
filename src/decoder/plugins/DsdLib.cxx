@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,8 +32,6 @@
 #ifdef ENABLE_ID3TAG
 #include <id3tag.h>
 #endif
-
-#include <stdexcept>
 
 #include <string.h>
 #include <stdlib.h>

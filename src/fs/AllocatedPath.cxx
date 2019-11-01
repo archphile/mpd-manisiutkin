@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,13 +18,8 @@
  */
 
 #include "AllocatedPath.hxx"
-#include "Domain.hxx"
 #include "Charset.hxx"
 #include "Features.hxx"
-#include "util/Compiler.h"
-#include "config.h"
-
-#include <exception>
 
 /* no inlining, please */
 AllocatedPath::~AllocatedPath() noexcept = default;

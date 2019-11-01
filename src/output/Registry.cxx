@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,8 +38,7 @@
 #include "plugins/sles/SlesOutputPlugin.hxx"
 #include "plugins/SolarisOutputPlugin.hxx"
 #include "plugins/WinmmOutputPlugin.hxx"
-
-#include <string.h>
+#include "util/StringAPI.hxx"
 
 const AudioOutputPlugin *const audio_output_plugins[] = {
 #ifdef HAVE_SHOUT
@@ -101,7 +100,7 @@ const AudioOutputPlugin *
 AudioOutputPlugin_get(const char *name)
 {
 	audio_output_plugins_for_each(plugin)
-		if (strcmp(plugin->name, name) == 0)
+		if (StringIsEqual(plugin->name, name))
 			return plugin;
 
 	return nullptr;

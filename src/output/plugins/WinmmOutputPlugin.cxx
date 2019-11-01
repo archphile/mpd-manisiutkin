@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,14 +19,14 @@
 
 #include "WinmmOutputPlugin.hxx"
 #include "../OutputAPI.hxx"
-#include "pcm/PcmBuffer.hxx"
+#include "pcm/Buffer.hxx"
 #include "mixer/MixerList.hxx"
 #include "fs/AllocatedPath.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/Macros.hxx"
 #include "util/StringCompare.hxx"
 
 #include <array>
+#include <iterator>
 
 #include <stdlib.h>
 #include <string.h>
@@ -86,7 +86,7 @@ MakeWaveOutError(MMRESULT result, const char *prefix)
 {
 	char buffer[256];
 	if (waveOutGetErrorTextA(result, buffer,
-				 ARRAY_SIZE(buffer)) == MMSYSERR_NOERROR)
+				 std::size(buffer)) == MMSYSERR_NOERROR)
 		return FormatRuntimeError("%s: %s", prefix, buffer);
 	else
 		return std::runtime_error(prefix);

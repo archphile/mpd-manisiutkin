@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@ try {
 		return false;
 
 	return tag_stream_scan(*is, handler);
-} catch (const std::exception &e) {
+} catch (...) {
 	return false;
 }
 
@@ -45,6 +45,6 @@ try {
 
 	auto is = archive.OpenStream(path_utf8, mutex);
 	return is && tag_stream_scan(*is, builder);
-} catch (const std::exception &e) {
+} catch (...) {
 	return false;
 }

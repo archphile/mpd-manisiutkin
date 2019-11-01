@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,9 +36,7 @@
 #include "util/Manual.hxx"
 #include "Log.hxx"
 
-#include <stdexcept>
 #include <string>
-#include <list>
 #include <map>
 
 static NeighborInfo

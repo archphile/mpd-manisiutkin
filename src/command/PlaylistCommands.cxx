@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@
 #include "Instance.hxx"
 #include "db/Selection.hxx"
 #include "db/DatabasePlaylist.hxx"
-#include "CommandError.hxx"
 #include "PlaylistSave.hxx"
 #include "PlaylistFile.hxx"
 #include "PlaylistError.hxx"
@@ -39,8 +38,8 @@
 #include "Mapper.hxx"
 #include "fs/AllocatedPath.hxx"
 #include "time/ChronoUtil.hxx"
-#include "util/UriUtil.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/UriExtract.hxx"
 #include "LocateUri.hxx"
 
 bool

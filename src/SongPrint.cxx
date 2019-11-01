@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,9 +19,6 @@
 
 #include "SongPrint.hxx"
 #include "song/LightSong.hxx"
-#include "Partition.hxx"
-#include "Instance.hxx"
-#include "storage/StorageInterface.hxx"
 #include "song/DetachedSong.hxx"
 #include "TimePrint.hxx"
 #include "TagPrint.hxx"

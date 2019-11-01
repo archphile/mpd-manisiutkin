@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -55,17 +55,8 @@ MigrateCurlProxyConfig(ConfigData &config) noexcept
 				 "proxy_password");
 }
 
-static void
-MigrateMadConfig(ConfigData &config) noexcept
-{
-	MigrateParamToBlockParam(config, ConfigOption::GAPLESS_MP3_PLAYBACK,
-				 ConfigBlockOption::DECODER, "plugin", "mad",
-				 "gapless");
-}
-
 void
 Migrate(ConfigData &config) noexcept
 {
 	MigrateCurlProxyConfig(config);
-	MigrateMadConfig(config);
 }

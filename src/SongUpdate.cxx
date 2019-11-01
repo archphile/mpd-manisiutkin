@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,18 +23,16 @@
 #include "db/plugins/simple/Directory.hxx"
 #include "storage/StorageInterface.hxx"
 #include "storage/FileInfo.hxx"
-#include "util/UriUtil.hxx"
 #include "fs/AllocatedPath.hxx"
 #include "fs/FileInfo.hxx"
 #include "tag/Builder.hxx"
 #include "TagFile.hxx"
 #include "TagStream.hxx"
+#include "util/UriExtract.hxx"
 
 #ifdef ENABLE_ARCHIVE
 #include "TagArchive.hxx"
 #endif
-
-#include <exception>
 
 #include <assert.h>
 #include <string.h>
@@ -47,7 +45,7 @@ Song::LoadFile(Storage &storage, const char *path_utf8, Directory &parent)
 	assert(!uri_has_scheme(path_utf8));
 	assert(strchr(path_utf8, '\n') == nullptr);
 
-	auto song = NewFile(path_utf8, parent);
+	auto song = std::make_unique<Song>(path_utf8, parent);
 	if (!song->UpdateFile(storage))
 		return nullptr;
 
@@ -100,8 +98,7 @@ Song::LoadFromArchive(ArchiveFile &archive, const char *name_utf8,
 	assert(!uri_has_scheme(name_utf8));
 	assert(strchr(name_utf8, '\n') == nullptr);
 
-	auto song = NewFile(name_utf8, parent);
-
+	auto song = std::make_unique<Song>(name_utf8, parent);
 	if (!song->UpdateFileInArchive(archive))
 		return nullptr;
 
@@ -111,12 +108,11 @@ Song::LoadFromArchive(ArchiveFile &archive, const char *name_utf8,
 bool
 Song::UpdateFileInArchive(ArchiveFile &archive) noexcept
 {
-	assert(parent != nullptr);
-	assert(parent->device == DEVICE_INARCHIVE);
+	assert(parent.device == DEVICE_INARCHIVE);
 
-	std::string path_utf8(uri);
+	std::string path_utf8(filename);
 
-	for (const Directory *directory = parent;
+	for (const Directory *directory = &parent;
 	     directory->parent != nullptr &&
 		     directory->parent->device == DEVICE_INARCHIVE;
 	     directory = directory->parent) {

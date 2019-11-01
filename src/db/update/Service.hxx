@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,9 +64,9 @@ public:
 	UpdateService(const ConfigData &_config,
 		      EventLoop &_loop, SimpleDatabase &_db,
 		      CompositeStorage &_storage,
-		      DatabaseListener &_listener);
+		      DatabaseListener &_listener) noexcept;
 
-	~UpdateService();
+	~UpdateService() noexcept;
 
 	auto &GetEventLoop() const noexcept {
 		return defer.GetEventLoop();
@@ -76,7 +76,7 @@ public:
 	 * Returns a non-zero job id when we are currently updating
 	 * the database.
 	 */
-	unsigned GetId() const {
+	unsigned GetId() const noexcept {
 		return next.id;
 	}
 
@@ -96,25 +96,25 @@ public:
 	 * Clear the queue and cancel the current update.  Does not
 	 * wait for the thread to exit.
 	 */
-	void CancelAllAsync();
+	void CancelAllAsync() noexcept;
 
 	/**
 	 * Cancel all updates for the given mount point.  If an update
 	 * is already running for it, the method will wait for
 	 * cancellation to complete.
 	 */
-	void CancelMount(const char *uri);
+	void CancelMount(const char *uri) noexcept;
 
 private:
 	/* DeferEvent callback */
 	void RunDeferred() noexcept;
 
 	/* the update thread */
-	void Task();
+	void Task() noexcept;
 
 	void StartThread(UpdateQueueItem &&i);
 
-	unsigned GenerateId();
+	unsigned GenerateId() noexcept;
 };
 
 #endif

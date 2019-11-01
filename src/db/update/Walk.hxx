@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@
 struct StorageFileInfo;
 struct Directory;
 struct ArchivePlugin;
+struct PlaylistPlugin;
 class ArchiveFile;
 class Storage;
 class ExcludeList;
@@ -118,6 +119,10 @@ private:
 	}
 #endif
 
+	void UpdatePlaylistFile(Directory &parent, const char *name,
+				const StorageFileInfo &info,
+				const PlaylistPlugin &plugin) noexcept;
+
 	bool UpdatePlaylistFile(Directory &directory,
 				const char *name, const char *suffix,
 				const StorageFileInfo &info) noexcept;
@@ -141,9 +146,19 @@ private:
 	 * exists already and is unmodified.
 	 *
 	 * The caller must lock the database.
+	 *
+	 * @param virtual_device one of the DEVICE_* constants
+	 * specifying the kind of virtual directory
 	 */
-	Directory *MakeDirectoryIfModified(Directory &parent, const char *name,
-					   const StorageFileInfo &info) noexcept;
+	Directory *MakeVirtualDirectoryIfModified(Directory &parent,
+						  const char *name,
+						  const StorageFileInfo &info,
+						  unsigned virtual_device) noexcept;
+
+	Directory *LockMakeVirtualDirectoryIfModified(Directory &parent,
+						      const char *name,
+						      const StorageFileInfo &info,
+						      unsigned virtual_device) noexcept;
 
 	Directory *DirectoryMakeChildChecked(Directory &parent,
 					     const char *uri_utf8,

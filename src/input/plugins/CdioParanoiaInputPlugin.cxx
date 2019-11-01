@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@
  * CD-Audio handling (requires libcdio_paranoia)
  */
 
-#include "config.h"
 #include "CdioParanoiaInputPlugin.hxx"
 #include "lib/cdio/Paranoia.hxx"
 #include "../InputStream.hxx"
@@ -34,7 +33,6 @@
 #include "fs/AllocatedPath.hxx"
 #include "Log.hxx"
 #include "config/Block.hxx"
-#include "config/Domain.hxx"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -301,11 +299,7 @@ CdioParanoiaInputStream::Read(std::unique_lock<Mutex> &,
 				if (s_err) {
 					FormatError(cdio_domain,
 						    "paranoia_read: %s", s_err);
-#if LIBCDIO_VERSION_NUM >= 90
 					cdio_cddap_free_messages(s_err);
-#else
-					free(s_err);
-#endif
 				}
 
 				throw;
@@ -360,4 +354,5 @@ const InputPlugin input_plugin_cdio_paranoia = {
 	input_cdio_init,
 	nullptr,
 	input_cdio_open,
+	nullptr
 };

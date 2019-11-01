@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,6 @@
 
 #include "CurlInputPlugin.hxx"
 #include "lib/curl/Error.hxx"
-#include "lib/curl/Easy.hxx"
 #include "lib/curl/Global.hxx"
 #include "lib/curl/Init.hxx"
 #include "lib/curl/Request.hxx"
@@ -36,10 +35,8 @@
 #include "event/Call.hxx"
 #include "event/Loop.hxx"
 #include "util/ASCII.hxx"
-#include "util/StringUtil.hxx"
 #include "util/StringFormat.hxx"
 #include "util/NumberParser.hxx"
-#include "util/RuntimeError.hxx"
 #include "util/Domain.hxx"
 #include "Log.hxx"
 #include "PluginUnavailable.hxx"
@@ -50,10 +47,6 @@
 #include <string.h>
 
 #include <curl/curl.h>
-
-#if LIBCURL_VERSION_NUM < 0x071200
-#error libcurl is too old
-#endif
 
 /**
  * Do not buffer more than this number of bytes.  It should be a
@@ -470,16 +463,25 @@ input_curl_open(const char *url, Mutex &mutex)
 	return CurlInputStream::Open(url, {}, mutex);
 }
 
-static constexpr const char *curl_prefixes[] = {
-	"http://",
-	"https://",
-	nullptr
-};
+static std::set<std::string>
+input_curl_protocols() {
+	std::set<std::string> protocols;
+	auto version_info = curl_version_info(CURLVERSION_FIRST);
+	for (auto proto_ptr = version_info->protocols; *proto_ptr != nullptr; proto_ptr++) {
+		if (protocol_is_whitelisted(*proto_ptr)) {
+			std::string schema(*proto_ptr);
+			schema.append("://");
+			protocols.emplace(schema);
+		}
+	}
+	return protocols;
+}
 
 const struct InputPlugin input_plugin_curl = {
 	"curl",
-	curl_prefixes,
+	nullptr,
 	input_curl_init,
 	input_curl_finish,
 	input_curl_open,
+	input_curl_protocols
 };

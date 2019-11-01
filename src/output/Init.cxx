@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,6 @@
 #include "mixer/MixerList.hxx"
 #include "mixer/MixerType.hxx"
 #include "mixer/MixerControl.hxx"
-#include "mixer/plugins/SoftwareMixerPlugin.hxx"
 #include "filter/LoadChain.hxx"
 #include "filter/Prepared.hxx"
 #include "filter/plugins/AutoConvertFilterPlugin.hxx"
@@ -35,10 +34,8 @@
 #include "filter/plugins/ChainFilterPlugin.hxx"
 #include "filter/plugins/VolumeFilterPlugin.hxx"
 #include "filter/plugins/NormalizeFilterPlugin.hxx"
-#include "config/Domain.hxx"
-#include "config/Option.hxx"
-#include "config/Block.hxx"
 #include "util/RuntimeError.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringFormat.hxx"
 #include "Log.hxx"
 
@@ -109,14 +106,14 @@ audio_output_mixer_type(const ConfigBlock &block,
 static Mixer *
 audio_output_load_mixer(EventLoop &event_loop, FilteredAudioOutput &ao,
 			const ConfigBlock &block,
-			const AudioOutputDefaults &defaults,
+			const MixerType mixer_type,
 			const MixerPlugin *plugin,
 			PreparedFilter &filter_chain,
 			MixerListener &listener)
 {
 	Mixer *mixer;
 
-	switch (audio_output_mixer_type(block, defaults)) {
+	switch (mixer_type) {
 	case MixerType::NONE:
 		return nullptr;
 
@@ -209,18 +206,26 @@ FilteredAudioOutput::Setup(EventLoop &event_loop,
 	    !config_audio_format.IsFullyDefined())
 		throw std::runtime_error("Need full audio format specification");
 
+	const auto mixer_type = audio_output_mixer_type(block, defaults);
+
 	/* create the replay_gain filter */
 
 	const char *replay_gain_handler =
 		block.GetBlockValue("replay_gain_handler", "software");
 
-	if (strcmp(replay_gain_handler, "none") != 0) {
+	if (!StringIsEqual(replay_gain_handler, "none")) {
+		/* when using software volume, we lose quality by
+		   invoking PcmVolume::Apply() twice; to avoid losing
+		   too much precision, we allow the ReplayGainFilter
+		   to convert 16 bit to 24 bit */
+		const bool allow_convert = mixer_type == MixerType::SOFTWARE;
+
 		prepared_replay_gain_filter =
-			NewReplayGainFilter(replay_gain_config);
+			NewReplayGainFilter(replay_gain_config, allow_convert);
 		assert(prepared_replay_gain_filter != nullptr);
 
 		prepared_other_replay_gain_filter =
-			NewReplayGainFilter(replay_gain_config);
+			NewReplayGainFilter(replay_gain_config, allow_convert);
 		assert(prepared_other_replay_gain_filter != nullptr);
 	}
 
@@ -228,7 +233,7 @@ FilteredAudioOutput::Setup(EventLoop &event_loop,
 
 	try {
 		mixer = audio_output_load_mixer(event_loop, *this, block,
-						defaults,
+						mixer_type,
 						mixer_plugin,
 						*prepared_filter,
 						mixer_listener);
@@ -240,14 +245,14 @@ FilteredAudioOutput::Setup(EventLoop &event_loop,
 
 	/* use the hardware mixer for replay gain? */
 
-	if (strcmp(replay_gain_handler, "mixer") == 0) {
+	if (StringIsEqual(replay_gain_handler, "mixer")) {
 		if (mixer != nullptr)
 			replay_gain_filter_set_mixer(*prepared_replay_gain_filter,
 						     mixer, 100);
 		else
 			FormatError(output_domain,
 				    "No such mixer for output '%s'", name);
-	} else if (strcmp(replay_gain_handler, "software") != 0 &&
+	} else if (!StringIsEqual(replay_gain_handler, "software") &&
 		   prepared_replay_gain_filter != nullptr) {
 		throw std::runtime_error("Invalid \"replay_gain_handler\" value");
 	}

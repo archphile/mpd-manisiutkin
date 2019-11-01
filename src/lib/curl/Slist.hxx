@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2008-2018 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@ class CurlSlist {
 	struct curl_slist *head = nullptr;
 
 public:
-	CurlSlist() = default;
+	CurlSlist() noexcept = default;
 
 	CurlSlist(CurlSlist &&src) noexcept
 		:head(std::exchange(src.head, nullptr)) {}

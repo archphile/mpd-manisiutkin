@@ -18,98 +18,41 @@
  */
 
 #include "Song.hxx"
-#include "Disposer.hxx"
 #include "Directory.hxx"
 #include "tag/Tag.hxx"
-#include "util/VarSize.hxx"
 #include "song/DetachedSong.hxx"
 #include "song/LightSong.hxx"
+#include "fs/Traits.hxx"
 
-#include <assert.h>
-#include <string.h>
-
-inline
-Song::Song(const char *_uri, size_t uri_length, Directory &_parent) noexcept
-	:parent(&_parent)
+Song::Song(DetachedSong &&other, Directory &_parent) noexcept
+	:tag(std::move(other.WritableTag())),
+	 parent(_parent),
+	 mtime(other.GetLastModified()),
+	 start_time(other.GetStartTime()),
+	 end_time(other.GetEndTime()),
+	 filename(other.GetURI())
 {
-	memcpy(uri, _uri, uri_length + 1);
-}
-
-inline
-Song::~Song() noexcept
-{
-}
-
-static SongPtr
-song_alloc(const char *uri, Directory &parent) noexcept
-{
-	size_t uri_length;
-
-	assert(uri);
-	uri_length = strlen(uri);
-	assert(uri_length);
-
-	auto *song = NewVarSize<Song>(sizeof(Song::uri),
-				      uri_length + 1,
-				      uri, uri_length, parent);
-	return SongPtr(song);
-}
-
-SongPtr
-Song::NewFrom(DetachedSong &&other, Directory &parent) noexcept
-{
-	SongPtr song(song_alloc(other.GetURI(), parent));
-	song->tag = std::move(other.WritableTag());
-	song->mtime = other.GetLastModified();
-	song->start_time = other.GetStartTime();
-	song->end_time = other.GetEndTime();
-	return song;
-}
-
-SongPtr
-Song::NewFile(const char *path, Directory &parent) noexcept
-{
-	return SongPtr(song_alloc(path, parent));
-}
-
-void
-Song::Free() noexcept
-{
-	DeleteVarSize(this);
-}
-
-void
-SongDisposer::operator()(Song *song) const noexcept
-{
-	song->Free();
 }
 
 std::string
 Song::GetURI() const noexcept
 {
-	assert(*uri);
-
-	if (parent->IsRoot())
-		return std::string(uri);
+	if (parent.IsRoot())
+		return filename;
 	else {
-		const char *path = parent->GetPath();
-
-		std::string result;
-		result.reserve(strlen(path) + 1 + strlen(uri));
-		result.assign(path);
-		result.push_back('/');
-		result.append(uri);
-		return result;
+		const char *path = parent.GetPath();
+		return PathTraitsUTF8::Build(path, filename.c_str());
 	}
 }
 
 LightSong
 Song::Export() const noexcept
 {
-	LightSong dest(uri, tag);
-	dest.directory = parent->IsRoot()
-		? nullptr : parent->GetPath();
-	dest.real_uri = nullptr;
+	LightSong dest(filename.c_str(), tag);
+	if (!parent.IsRoot())
+		dest.directory = parent.GetPath();
+	if (!target.empty())
+		dest.real_uri = target.c_str();
 	dest.mtime = mtime;
 	dest.start_time = start_time;
 	dest.end_time = end_time;

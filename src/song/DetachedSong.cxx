@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include "song/DetachedSong.hxx"
 #include "song/LightSong.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriExtract.hxx"
 #include "fs/Traits.hxx"
 
 DetachedSong::DetachedSong(const LightSong &other)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 #include "config.h"
 #include "DecoderList.hxx"
 #include "DecoderPlugin.hxx"
+#include "PluginUnavailable.hxx"
+#include "Log.hxx"
 #include "config/Data.hxx"
 #include "config/Block.hxx"
 #include "plugins/AudiofileDecoderPlugin.hxx"
@@ -53,7 +55,9 @@
 #include "plugins/MpcdecDecoderPlugin.hxx"
 #include "plugins/FluidsynthDecoderPlugin.hxx"
 #include "plugins/SidplayDecoderPlugin.hxx"
-#include "util/Macros.hxx"
+#include "util/RuntimeError.hxx"
+
+#include <iterator>
 
 #include <string.h>
 
@@ -134,7 +138,7 @@ const struct DecoderPlugin *const decoder_plugins[] = {
 };
 
 static constexpr unsigned num_decoder_plugins =
-	ARRAY_SIZE(decoder_plugins) - 1;
+	std::size(decoder_plugins) - 1;
 
 /** which plugins have been initialized successfully? */
 bool decoder_plugins_enabled[num_decoder_plugins];
@@ -167,8 +171,17 @@ decoder_plugin_init_all(const ConfigData &config)
 		if (param != nullptr)
 			param->SetUsed();
 
-		if (plugin.Init(*param))
-			decoder_plugins_enabled[i] = true;
+		try {
+			if (plugin.Init(*param))
+				decoder_plugins_enabled[i] = true;
+		} catch (const PluginUnavailable &e) {
+			FormatError(e,
+				    "Decoder plugin '%s' is unavailable",
+				    plugin.name);
+		} catch (...) {
+			std::throw_with_nested(FormatRuntimeError("Failed to initialize decoder plugin '%s'",
+								  plugin.name));
+		}
 	}
 }
 

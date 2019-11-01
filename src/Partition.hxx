@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,6 @@
 #include "ReplayGainMode.hxx"
 #include "SingleMode.hxx"
 #include "Chrono.hxx"
-#include "util/Compiler.h"
 #include "config.h"
 
 #include <string>
@@ -268,7 +267,7 @@ private:
 	void OnMixerVolumeChanged(Mixer &mixer, int volume) noexcept override;
 
 	/* callback for #global_events */
-	void OnGlobalEvent(unsigned mask);
+	void OnGlobalEvent(unsigned mask) noexcept;
 };
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,9 +26,12 @@
 #include "db/Selection.hxx"
 #include "db/Interface.hxx"
 #include "db/Stats.hxx"
-#include "system/Clock.hxx"
 #include "Log.hxx"
 #include "time/ChronoUtil.hxx"
+
+#ifdef _WIN32
+#include "system/Clock.hxx"
+#endif
 
 #include <chrono>
 #include <cmath>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,14 +26,14 @@
 #include "lib/alsa/Version.hxx"
 #include "../OutputAPI.hxx"
 #include "mixer/MixerList.hxx"
-#include "pcm/PcmExport.hxx"
+#include "pcm/Export.hxx"
+#include "system/PeriodClock.hxx"
 #include "thread/Mutex.hxx"
 #include "thread/Cond.hxx"
 #include "util/Manual.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Domain.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/ScopeExit.hxx"
 #include "util/StringView.hxx"
 #include "event/MultiSocketMonitor.hxx"
 #include "event/DeferEvent.hxx"
@@ -55,6 +55,17 @@ class AlsaOutput final
 	: AudioOutput, MultiSocketMonitor {
 
 	DeferEvent defer_invalidate_sockets;
+
+	/**
+	 * This timer is used to re-schedule the #MultiSocketMonitor
+	 * after it had been disabled to wait for the next Play() call
+	 * to deliver more data.  This timer is necessary to start
+	 * generating silence if Play() doesn't get called soon enough
+	 * to avoid the xrun.
+	 */
+	TimerEvent silence_timer;
+
+	PeriodClock throttle_silence_log;
 
 	Manual<PcmExport> pcm_export;
 
@@ -92,12 +103,10 @@ class AlsaOutput final
 	/** the libasound PCM device handle */
 	snd_pcm_t *pcm;
 
-#ifndef NDEBUG
 	/**
 	 * The size of one audio frame passed to method play().
 	 */
 	size_t in_frame_size;
-#endif
 
 	/**
 	 * The size of one audio frame passed to libasound.
@@ -108,6 +117,8 @@ class AlsaOutput final
 	 * The size of one period, in number of frames.
 	 */
 	snd_pcm_uframes_t period_frames;
+
+	std::chrono::steady_clock::duration effective_period_duration;
 
 	/**
 	 * If snd_pcm_avail() goes above this value and no more data
@@ -128,12 +139,19 @@ class AlsaOutput final
 	bool work_around_drain_bug;
 
 	/**
-	 * After Open(), has this output been activated by a Play()
-	 * command?
+	 * After Open() or Cancel(), has this output been activated by
+	 * a Play() command?
 	 *
 	 * Protected by #mutex.
 	 */
 	bool active;
+
+	/**
+	 * Is this output waiting for more data?
+	 *
+	 * Protected by #mutex.
+	 */
+	bool waiting;
 
 	/**
 	 * Do we need to call snd_pcm_prepare() before the next write?
@@ -176,7 +194,7 @@ class AlsaOutput final
 	Alsa::PeriodBuffer period_buffer;
 
 	/**
-	 * Protects #cond, #error, #active, #drain.
+	 * Protects #cond, #error, #active, #waiting, #drain.
 	 */
 	mutable Mutex mutex;
 
@@ -227,7 +245,7 @@ private:
 	 * Set up the snd_pcm_t object which was opened by the caller.
 	 * Set up the configured settings and the audio format.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void Setup(AudioFormat &audio_format, PcmExport::Params &params);
 
@@ -248,6 +266,12 @@ private:
 		return active;
 	}
 
+	gcc_pure
+	bool LockIsActiveAndNotWaiting() const noexcept {
+		const std::lock_guard<Mutex> lock(mutex);
+		return active && !waiting;
+	}
+
 	/**
 	 * Activate the output by registering the sockets in the
 	 * #EventLoop.  Before calling this, filling the ring buffer
@@ -260,15 +284,27 @@ private:
 	 * was never unlocked
 	 */
 	bool Activate() noexcept {
-		if (active)
+		if (active && !waiting)
 			return false;
 
 		active = true;
+		waiting = false;
 
 		const ScopeUnlock unlock(mutex);
 		defer_invalidate_sockets.Schedule();
 		return true;
 	}
+
+	/**
+	 * Wait until there is some space available in the ring buffer.
+	 *
+	 * Caller must not lock the mutex.
+	 *
+	 * Throws on error.
+	 *
+	 * @return the number of frames available for writing
+	 */
+	size_t LockWaitWriteAvailable();
 
 	int Recover(int err) noexcept;
 
@@ -311,7 +347,8 @@ private:
 	}
 
 	snd_pcm_sframes_t WriteFromPeriodBuffer() noexcept {
-		assert(!period_buffer.IsEmpty());
+		assert(period_buffer.IsFull());
+		assert(period_buffer.GetFrames(out_frame_size) > 0);
 
 		auto frames_written = snd_pcm_writei(pcm, period_buffer.GetHead(),
 						     period_buffer.GetFrames(out_frame_size));
@@ -330,7 +367,21 @@ private:
 		const std::lock_guard<Mutex> lock(mutex);
 		error = std::current_exception();
 		active = false;
+		waiting = false;
 		cond.notify_one();
+	}
+
+	/**
+	 * Callback for @silence_timer
+	 */
+	void OnSilenceTimer() noexcept {
+		{
+			const std::lock_guard<Mutex> lock(mutex);
+			assert(active);
+			waiting = false;
+		}
+
+		MultiSocketMonitor::InvalidateSockets();
 	}
 
 	/* virtual methods from class MultiSocketMonitor */
@@ -344,6 +395,7 @@ AlsaOutput::AlsaOutput(EventLoop &_loop, const ConfigBlock &block)
 	:AudioOutput(FLAG_ENABLE_DISABLE),
 	 MultiSocketMonitor(_loop),
 	 defer_invalidate_sockets(_loop, BIND_THIS_METHOD(InvalidateSockets)),
+	 silence_timer(_loop, BIND_THIS_METHOD(OnSilenceTimer)),
 	 device(block.GetBlockValue("device", "")),
 #ifdef ENABLE_DSD
 	 dop_setting(block.GetBlockValue("dop", false) ||
@@ -500,8 +552,9 @@ AlsaOutput::Setup(AudioFormat &audio_format,
 		alsa_period_size = 1;
 
 	period_frames = alsa_period_size;
+	effective_period_duration = audio_format.FramesToTime<decltype(effective_period_duration)>(period_frames);
 
-	/* generate silence if there's less than once period of data
+	/* generate silence if there's less than one period of data
 	   in the ALSA-PCM buffer */
 	max_avail_frames = hw_result.buffer_size - hw_result.period_size;
 
@@ -558,12 +611,12 @@ AlsaOutput::SetupOrDop(AudioFormat &audio_format, PcmExport::Params &params
 	std::exception_ptr dop_error;
 	if (dop && audio_format.format == SampleFormat::DSD) {
 		try {
-			params.dop = true;
+			params.dsd_mode = PcmExport::DsdMode::DOP;
 			SetupDop(audio_format, params);
 			return;
 		} catch (...) {
 			dop_error = std::current_exception();
-			params.dop = false;
+			params.dsd_mode = PcmExport::DsdMode::NONE;
 		}
 	}
 
@@ -663,7 +716,7 @@ AlsaOutput::Open(AudioFormat &audio_format)
 	snd_pcm_nonblock(pcm, 1);
 
 #ifdef ENABLE_DSD
-	if (params.dop)
+	if (params.dsd_mode == PcmExport::DsdMode::DOP)
 		FormatDebug(alsa_output_domain, "DoP (DSD over PCM) enabled");
 #endif
 
@@ -671,10 +724,8 @@ AlsaOutput::Open(AudioFormat &audio_format)
 			 audio_format.channels,
 			 params);
 
-#ifndef NDEBUG
 	in_frame_size = audio_format.GetFrameSize();
-#endif
-	out_frame_size = pcm_export->GetFrameSize(audio_format);
+	out_frame_size = pcm_export->GetOutputFrameSize();
 
 	drain = false;
 
@@ -684,6 +735,7 @@ AlsaOutput::Open(AudioFormat &audio_format)
 	period_buffer.Allocate(period_frames, out_frame_size);
 
 	active = false;
+	waiting = false;
 	must_prepare = false;
 	written = false;
 	error = {};
@@ -721,13 +773,16 @@ AlsaOutput::Recover(int err) noexcept
 		written = false;
 		err = snd_pcm_prepare(pcm);
 		break;
+
 	case SND_PCM_STATE_DISCONNECTED:
+	case SND_PCM_STATE_DRAINING:
+		/* can't play in this state; throw the error */
 		break;
-	/* this is no error, so just keep running */
+
 	case SND_PCM_STATE_PREPARED:
 	case SND_PCM_STATE_RUNNING:
-	case SND_PCM_STATE_DRAINING:
-		err = 0;
+		/* the state is ok, but the error was unexpected;
+		   throw it */
 		break;
 
 	default:
@@ -746,33 +801,54 @@ AlsaOutput::DrainInternal()
 	/* drain ring_buffer */
 	CopyRingToPeriodBuffer();
 
-	auto period_position = period_buffer.GetPeriodPosition(out_frame_size);
-	if (period_position > 0)
-		/* generate some silence to finish the partial
-		   period */
-		period_buffer.FillWithSilence(silence, out_frame_size);
-
 	/* drain period_buffer */
-	if (!period_buffer.IsEmpty()) {
-		auto frames_written = WriteFromPeriodBuffer();
-		if (frames_written < 0) {
-			if (frames_written == -EAGAIN)
-				return false;
+	if (!period_buffer.IsCleared()) {
+		if (!period_buffer.IsFull())
+			/* generate some silence to finish the partial
+			   period */
+			period_buffer.FillWithSilence(silence, out_frame_size);
 
-			throw FormatRuntimeError("snd_pcm_writei() failed: %s",
-						 snd_strerror(-frames_written));
+		/* drain period_buffer */
+		if (!period_buffer.IsDrained()) {
+			auto frames_written = WriteFromPeriodBuffer();
+			if (frames_written < 0) {
+				if (frames_written == -EAGAIN)
+					return false;
+
+				throw FormatRuntimeError("snd_pcm_writei() failed: %s",
+							 snd_strerror(-frames_written));
+			}
+
+			/* need to call CopyRingToPeriodBuffer() and
+			   WriteFromPeriodBuffer() again in the next
+			   iteration, so don't finish the drain just
+			   yet */
+			return false;
 		}
-
-		/* need to call CopyRingToPeriodBuffer() and
-		   WriteFromPeriodBuffer() again in the next
-		   iteration, so don't finish the drain just yet */
-		return period_buffer.IsEmpty();
 	}
 
 	if (!written)
 		/* if nothing has ever been written to the PCM, we
 		   don't need to drain it */
 		return true;
+
+	switch (snd_pcm_state(pcm)) {
+	case SND_PCM_STATE_PREPARED:
+	case SND_PCM_STATE_RUNNING:
+		/* these states require a call to snd_pcm_drain() */
+		break;
+
+	case SND_PCM_STATE_DRAINING:
+		/* already draining, but not yet finished; this is
+		   probably a spurious epoll event, and we should wait
+		   for the next one */
+		return false;
+
+	default:
+		/* all other states cannot be drained, and we're
+		   done */
+		return true;
+	}
 
 	/* .. and finally drain the ALSA hardware buffer */
 
@@ -826,9 +902,11 @@ AlsaOutput::CancelInternal() noexcept
 	ring_buffer->reset();
 
 	active = false;
+	waiting = false;
 
 	MultiSocketMonitor::Reset();
 	defer_invalidate_sockets.Cancel();
+	silence_timer.Cancel();
 }
 
 void
@@ -839,7 +917,7 @@ AlsaOutput::Cancel() noexcept
 		   synchronization */
 
 		pcm_export->Reset();
-		assert(period_buffer.IsEmpty());
+		assert(period_buffer.IsCleared());
 		ring_buffer->reset();
 
 		return;
@@ -857,6 +935,7 @@ AlsaOutput::Close() noexcept
 	BlockingCall(GetEventLoop(), [this](){
 			MultiSocketMonitor::Reset();
 			defer_invalidate_sockets.Cancel();
+			silence_timer.Cancel();
 		});
 
 	period_buffer.Free();
@@ -866,20 +945,10 @@ AlsaOutput::Close() noexcept
 }
 
 size_t
-AlsaOutput::Play(const void *chunk, size_t size)
+AlsaOutput::LockWaitWriteAvailable()
 {
-	assert(size > 0);
-	assert(size % in_frame_size == 0);
-
-	const auto e = pcm_export->Export({chunk, size});
-	if (e.size == 0)
-		/* the DoP (DSD over PCM) filter converts two frames
-		   at a time and ignores the last odd frame; if there
-		   was only one frame (e.g. the last frame in the
-		   file), the result is empty; to avoid an endless
-		   loop, bail out here, and pretend the one frame has
-		   been played */
-		return size;
+	const size_t out_block_size = pcm_export->GetOutputBlockSize();
+	const size_t min_available = 2 * out_block_size;
 
 	std::unique_lock<Mutex> lock(mutex);
 
@@ -887,10 +956,15 @@ AlsaOutput::Play(const void *chunk, size_t size)
 		if (error)
 			std::rethrow_exception(error);
 
-		size_t bytes_written = ring_buffer->push((const uint8_t *)e.data,
-							 e.size);
-		if (bytes_written > 0)
-			return pcm_export->CalcSourceSize(bytes_written);
+		size_t write_available = ring_buffer->write_available();
+		if (write_available >= min_available) {
+			/* reserve room for one extra block, just in
+			   case PcmExport::Export() has some partial
+			   block data in its internal buffer */
+			write_available -= out_block_size;
+
+			return write_available / out_frame_size;
+		}
 
 		/* now that the ring_buffer is full, we can activate
 		   the socket handlers to trigger the first
@@ -908,10 +982,33 @@ AlsaOutput::Play(const void *chunk, size_t size)
 	}
 }
 
+size_t
+AlsaOutput::Play(const void *chunk, size_t size)
+{
+	assert(size > 0);
+	assert(size % in_frame_size == 0);
+
+	const size_t max_frames = LockWaitWriteAvailable();
+	const size_t max_size = max_frames * in_frame_size;
+	if (size > max_size)
+		size = max_size;
+
+	const auto e = pcm_export->Export({chunk, size});
+	if (e.empty())
+		return size;
+
+	size_t bytes_written = ring_buffer->push((const uint8_t *)e.data,
+						 e.size);
+	assert(bytes_written == e.size);
+	(void)bytes_written;
+
+	return size;
+}
+
 std::chrono::steady_clock::duration
 AlsaOutput::PrepareSockets() noexcept
 {
-	if (!LockIsActive()) {
+	if (!LockIsActiveAndNotWaiting()) {
 		ClearSocketList();
 		return std::chrono::steady_clock::duration(-1);
 	}
@@ -962,7 +1059,7 @@ try {
 
 	CopyRingToPeriodBuffer();
 
-	if (period_buffer.IsEmpty()) {
+	if (!period_buffer.IsFull()) {
 		if (snd_pcm_state(pcm) == SND_PCM_STATE_PREPARED ||
 		    snd_pcm_avail(pcm) <= max_avail_frames) {
 			/* at SND_PCM_STATE_PREPARED (not yet switched
@@ -976,27 +1073,41 @@ try {
 			   whenever more data arrives */
 			/* the same applies when there is still enough
 			   data in the ALSA-PCM buffer (determined by
-			   snd_pcm_avail()); this can happend at the
+			   snd_pcm_avail()); this can happen at the
 			   start of playback, when our ring_buffer is
 			   smaller than the ALSA-PCM buffer */
 
 			{
 				const std::lock_guard<Mutex> lock(mutex);
-				active = false;
+				waiting = true;
 				cond.notify_one();
 			}
 
 			/* avoid race condition: see if data has
 			   arrived meanwhile before disabling the
-			   event (but after clearing the "active"
+			   event (but after setting the "waiting"
 			   flag) */
 			if (!CopyRingToPeriodBuffer()) {
 				MultiSocketMonitor::Reset();
 				defer_invalidate_sockets.Cancel();
+
+				/* just in case Play() doesn't get
+				   called soon enough, schedule a
+				   timer which generates silence
+				   before the xrun occurs */
+				/* the timer fires in half of a
+				   period; this short duration may
+				   produce a few more wakeups than
+				   necessary, but should be small
+				   enough to avoid the xrun */
+				silence_timer.Schedule(effective_period_duration / 2);
 			}
 
 			return;
 		}
+
+		if (throttle_silence_log.CheckUpdate(std::chrono::seconds(5)))
+			FormatWarning(alsa_output_domain, "Decoder is too slow; playing silence to avoid xrun");
 
 		/* insert some silence if the buffer has not enough
 		   data yet, to avoid ALSA xrun */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -147,15 +147,7 @@ static const char *const extm3u_mime_types[] = {
 	nullptr
 };
 
-const struct playlist_plugin extm3u_playlist_plugin = {
-	"extm3u",
-
-	nullptr,
-	nullptr,
-	nullptr,
-	extm3u_open_stream,
-
-	nullptr,
-	extm3u_suffixes,
-	extm3u_mime_types,
-};
+const PlaylistPlugin extm3u_playlist_plugin =
+	PlaylistPlugin("extm3u", extm3u_open_stream)
+	.WithSuffixes(extm3u_suffixes)
+	.WithMimeTypes(extm3u_mime_types);

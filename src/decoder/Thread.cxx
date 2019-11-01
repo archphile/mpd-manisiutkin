@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,11 +31,11 @@
 #include "DecoderList.hxx"
 #include "system/Error.hxx"
 #include "util/MimeType.hxx"
+#include "util/UriExtract.hxx"
 #include "util/UriUtil.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Domain.hxx"
 #include "util/ScopeExit.hxx"
-#include "util/StringCompare.hxx"
 #include "thread/Name.hxx"
 #include "tag/ApeReplayGain.hxx"
 #include "Log.hxx"
@@ -425,6 +425,11 @@ static void
 decoder_run_song(DecoderControl &dc,
 		 const DetachedSong &song, const char *uri, Path path_fs)
 {
+	if (dc.command == DecoderCommand::SEEK)
+		/* if the SEEK command arrived too late, start the
+		   decoder at the seek position */
+		dc.start_time = dc.seek_time;
+
 	DecoderBridge bridge(dc, dc.start_time.IsPositive(),
 			     /* pass the song tag only if it's
 				authoritative, i.e. if it's a local

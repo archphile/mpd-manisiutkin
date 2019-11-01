@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -69,12 +69,12 @@ OggVisitor::HandlePacket(const ogg_packet &packet)
 		/* fail if BOS is missing */
 		throw std::runtime_error("BOS packet expected");
 
+	OnOggPacket(packet);
+
 	if (packet.e_o_s) {
 		EndStream();
 		return;
 	}
-
-	OnOggPacket(packet);
 }
 
 inline void

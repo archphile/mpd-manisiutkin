@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -96,7 +96,7 @@ song_cmp(const Song &a, const Song &b) noexcept
 		return ret < 0;
 
 	/* still no difference?  compare file name */
-	return IcuCollate(a.uri, b.uri) < 0;
+	return IcuCollate(a.filename.c_str(), b.filename.c_str()) < 0;
 }
 
 void

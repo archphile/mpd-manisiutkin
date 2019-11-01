@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,8 @@
  */
 
 #include "SocketError.hxx"
-#include "util/Macros.hxx"
+
+#include <iterator>
 
 #include <string.h>
 
@@ -27,7 +28,7 @@
 SocketErrorMessage::SocketErrorMessage(socket_error_t code) noexcept
 {
 #ifdef _UNICODE
-	wchar_t buffer[ARRAY_SIZE(msg)];
+	wchar_t buffer[std::size(msg)];
 #else
 	auto *buffer = msg;
 #endif
@@ -36,7 +37,7 @@ SocketErrorMessage::SocketErrorMessage(socket_error_t code) noexcept
 				     FORMAT_MESSAGE_IGNORE_INSERTS |
 				     FORMAT_MESSAGE_MAX_WIDTH_MASK,
 				     nullptr, code, 0,
-				     buffer, ARRAY_SIZE(msg), nullptr);
+				     buffer, std::size(msg), nullptr);
 	if (nbytes == 0) {
 		strcpy(msg, "Unknown error");
 		return;
@@ -44,7 +45,7 @@ SocketErrorMessage::SocketErrorMessage(socket_error_t code) noexcept
 
 #ifdef _UNICODE
 	auto length = WideCharToMultiByte(CP_UTF8, 0, buffer, -1,
-					  msg, ARRAY_SIZE(msg),
+					  msg, std::size(msg),
 					  nullptr, nullptr);
 	if (length <= 0) {
 		strcpy(msg, "WideCharToMultiByte() error");

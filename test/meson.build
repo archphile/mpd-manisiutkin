@@ -37,6 +37,9 @@ test('TestUtil', executable(
   'TestDivideString.cxx',
   'TestMimeType.cxx',
   'TestSplitString.cxx',
+  'TestUriExtract.cxx',
+  'TestUriQueryParser.cxx',
+  'TestUriRelative.cxx',
   'TestUriUtil.cxx',
   'test_byte_reverse.cxx',
   include_directories: inc,
@@ -46,9 +49,24 @@ test('TestUtil', executable(
   ],
 ))
 
+test(
+  'TestTime',
+  executable(
+    'TestTime',
+    'TestISO8601.cxx',
+    include_directories: inc,
+    dependencies: [
+      time_dep,
+      gtest_dep,
+    ],
+  ),
+)
+
 test('TestRewindInputStream', executable(
   'TestRewindInputStream',
   'TestRewindInputStream.cxx',
+  '../src/Log.cxx',
+  '../src/LogBackend.cxx',
   include_directories: inc,
   dependencies: [
     input_glue_dep,
@@ -92,6 +110,9 @@ test('test_queue_priority', executable(
 test('TestFs', executable(
   'TestFs',
   'TestFs.cxx',
+  'TestLookupFile.cxx',
+  '../src/Log.cxx',
+  '../src/LogBackend.cxx',
   include_directories: inc,
   dependencies: [
     fs_dep,
@@ -328,6 +349,7 @@ if curl_dep.found()
     '../src/LogBackend.cxx',
     include_directories: inc,
     dependencies: [
+      icu_dep,
       tag_dep,
       gtest_dep,
     ],
@@ -339,18 +361,6 @@ endif
 #
 
 if archive_glue_dep.found()
-  test('test_archive', executable(
-    'test_archive',
-    'test_archive.cxx',
-    '../src/Log.cxx',
-    '../src/LogBackend.cxx',
-    include_directories: inc,
-    dependencies: [
-      archive_glue_dep,
-      gtest_dep,
-    ],
-  ))
-
   executable(
     'visit_archive',
     'visit_archive.cxx',

@@ -31,6 +31,7 @@
 
 #include <string>
 
+struct StringView;
 struct LightSong;
 struct Directory;
 class DetachedSong;
@@ -59,10 +60,9 @@ struct Song {
 	Tag tag;
 
 	/**
-	 * The #Directory that contains this song.  Must be
-	 * non-nullptr.
+	 * The #Directory that contains this song.
 	 */
-	Directory *const parent;
+	Directory &parent;
 
 	/**
 	 * The time stamp of the last file modification.  A negative
@@ -91,15 +91,22 @@ struct Song {
 	/**
 	 * The file name.
 	 */
-	char uri[sizeof(int)];
+	std::string filename;
 
-	Song(const char *_uri, size_t uri_length, Directory &parent) noexcept;
-	~Song() noexcept;
+	/**
+	 * If non-empty, then this object does not describe a file
+	 * within the `music_directory`, but some sort of symbolic
+	 * link pointing to this value.  It can be an absolute URI
+	 * (i.e. with URI scheme) or a URI relative to this object
+	 * (which may begin with one or more "../").
+	 */
+	std::string target;
 
-	static SongPtr NewFrom(DetachedSong &&other, Directory &parent) noexcept;
+	template<typename F>
+	Song(F &&_filename, Directory &_parent) noexcept
+		:parent(_parent), filename(std::forward<F>(_filename)) {}
 
-	/** allocate a new song with a local file name */
-	static SongPtr NewFile(const char *path_utf8, Directory &parent) noexcept;
+	Song(DetachedSong &&other, Directory &_parent) noexcept;
 
 	/**
 	 * allocate a new song structure with a local file name and attempt to
@@ -113,8 +120,6 @@ struct Song {
 	 */
 	static SongPtr LoadFile(Storage &storage, const char *name_utf8,
 				Directory &parent);
-
-	void Free() noexcept;
 
 	/**
 	 * Throws on error.

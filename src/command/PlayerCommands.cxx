@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,6 @@
 #include "config.h"
 #include "PlayerCommands.hxx"
 #include "Request.hxx"
-#include "CommandError.hxx"
 #include "queue/Playlist.hxx"
 #include "PlaylistPrint.hxx"
 #include "SingleMode.hxx"
@@ -29,7 +28,7 @@
 #include "mixer/Volume.hxx"
 #include "Partition.hxx"
 #include "Instance.hxx"
-#include "Idle.hxx"
+#include "IdleFlags.hxx"
 #include "AudioFormat.hxx"
 #include "util/StringBuffer.hxx"
 #include "util/ScopeExit.hxx"

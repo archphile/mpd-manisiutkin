@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,14 +24,14 @@
 #include "CheckAudioFormat.hxx"
 #include "tag/Handler.hxx"
 #include "fs/Path.hxx"
-#include "util/Macros.hxx"
 #include "util/Alloc.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/RuntimeError.hxx"
 
 #include <wavpack/wavpack.h>
 
-#include <stdexcept>
+#include <algorithm>
+#include <iterator>
 #include <memory>
 
 #include <cstdlib>
@@ -235,7 +235,7 @@ wavpack_decode(DecoderClient &client, WavpackContext *wpc, bool can_seek)
 
 	/* wavpack gives us all kind of samples in a 32-bit space */
 	int32_t chunk[1024];
-	const uint32_t samples_requested = ARRAY_SIZE(chunk) /
+	const uint32_t samples_requested = std::size(chunk) /
 		audio_format.channels;
 
 	DecoderCommand cmd = client.GetCommand();
@@ -644,15 +644,8 @@ static char const *const wavpack_mime_types[] = {
 	nullptr
 };
 
-const struct DecoderPlugin wavpack_decoder_plugin = {
-	"wavpack",
-	nullptr,
-	nullptr,
-	wavpack_streamdecode,
-	wavpack_filedecode,
-	wavpack_scan_file,
-	wavpack_scan_stream,
-	nullptr,
-	wavpack_suffixes,
-	wavpack_mime_types
-};
+constexpr DecoderPlugin wavpack_decoder_plugin =
+	DecoderPlugin("wavpack", wavpack_streamdecode, wavpack_scan_stream,
+		      wavpack_filedecode, wavpack_scan_file)
+	.WithSuffixes(wavpack_suffixes)
+	.WithMimeTypes(wavpack_mime_types);

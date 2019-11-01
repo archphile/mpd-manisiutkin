@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@
 UpdateService::UpdateService(const ConfigData &_config,
 			     EventLoop &_loop, SimpleDatabase &_db,
 			     CompositeStorage &_storage,
-			     DatabaseListener &_listener)
+			     DatabaseListener &_listener) noexcept
 	:config(_config),
 	 defer(_loop, BIND_THIS_METHOD(RunDeferred)),
 	 db(_db), storage(_storage),
@@ -50,7 +50,7 @@ UpdateService::UpdateService(const ConfigData &_config,
 {
 }
 
-UpdateService::~UpdateService()
+UpdateService::~UpdateService() noexcept
 {
 	CancelAllAsync();
 
@@ -59,7 +59,7 @@ UpdateService::~UpdateService()
 }
 
 void
-UpdateService::CancelAllAsync()
+UpdateService::CancelAllAsync() noexcept
 {
 	assert(GetEventLoop().IsInside());
 
@@ -70,7 +70,7 @@ UpdateService::CancelAllAsync()
 }
 
 void
-UpdateService::CancelMount(const char *uri)
+UpdateService::CancelMount(const char *uri) noexcept
 {
 	/* determine which (mounted) database will be updated and what
 	   storage will be scanned */
@@ -106,7 +106,7 @@ UpdateService::CancelMount(const char *uri)
 }
 
 inline void
-UpdateService::Task()
+UpdateService::Task() noexcept
 {
 	assert(walk != nullptr);
 
@@ -126,8 +126,9 @@ UpdateService::Task()
 	if (modified || !next.db->FileExists()) {
 		try {
 			next.db->Save();
-		} catch (const std::exception &e) {
-			LogError(e, "Failed to save database");
+		} catch (...) {
+			LogError(std::current_exception(),
+				 "Failed to save database");
 		}
 	}
 
@@ -159,7 +160,7 @@ UpdateService::StartThread(UpdateQueueItem &&i)
 }
 
 unsigned
-UpdateService::GenerateId()
+UpdateService::GenerateId() noexcept
 {
 	unsigned id = update_task_id + 1;
 	if (id > update_task_id_max)

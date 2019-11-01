@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2008-2018 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,8 +31,6 @@
 #include "Global.hxx"
 #include "event/Call.hxx"
 #include "thread/Mutex.hxx"
-
-#include <atomic>
 
 #include <assert.h>
 

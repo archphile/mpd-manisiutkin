@@ -44,6 +44,12 @@ static constexpr unsigned DEVICE_INARCHIVE = -1;
  */
 static constexpr unsigned DEVICE_CONTAINER = -2;
 
+/**
+ * Virtual directory that is really a playlist file (special value for
+ * Directory::device).
+ */
+static constexpr unsigned DEVICE_PLAYLIST = -3;
+
 class SongFilter;
 
 struct Directory {
@@ -109,6 +115,16 @@ public:
 	gcc_malloc gcc_returns_nonnull
 	static Directory *NewRoot() noexcept {
 		return new Directory(std::string(), nullptr);
+	}
+
+	/**
+	 * Is this really a regular file which is being treated like a
+	 * directory?
+	 */
+	bool IsReallyAFile() const noexcept {
+		return device == DEVICE_INARCHIVE ||
+			device == DEVICE_PLAYLIST ||
+			device == DEVICE_CONTAINER;
 	}
 
 	bool IsMount() const noexcept {
@@ -248,9 +264,9 @@ public:
 	/**
 	 * Remove a song object from this directory (which effectively
 	 * invalidates the song object, because the "parent" attribute becomes
-	 * stale), but does not free it.
+	 * stale), and return ownership to the caller.
 	 */
-	void RemoveSong(Song *song) noexcept;
+	SongPtr RemoveSong(Song *song) noexcept;
 
 	/**
 	 * Caller must lock the #db_mutex.

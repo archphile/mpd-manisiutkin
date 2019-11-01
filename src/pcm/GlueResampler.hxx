@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,9 +20,10 @@
 #ifndef MPD_GLUE_RESAMPLER_HXX
 #define MPD_GLUE_RESAMPLER_HXX
 
-#include "AudioFormat.hxx"
+#include "SampleFormat.hxx"
 #include "FormatConverter.hxx"
 
+struct AudioFormat;
 class PcmResampler;
 template<typename T> struct ConstBuffer;
 

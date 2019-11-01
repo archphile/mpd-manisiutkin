@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,6 @@
 #include "CheckAudioFormat.hxx"
 #include "fs/Path.hxx"
 #include "util/Domain.hxx"
-#include "util/Macros.hxx"
 #include "Log.hxx"
 
 #include <fluidsynth.h>
@@ -169,7 +168,7 @@ fluidsynth_file_decode(DecoderClient &client, Path path_fs)
 	DecoderCommand cmd;
 	while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING) {
 		int16_t buffer[2048];
-		const unsigned max_frames = ARRAY_SIZE(buffer) / 2;
+		const unsigned max_frames = std::size(buffer) / 2;
 
 		/* read samples from fluidsynth and send them to the
 		   MPD core */
@@ -207,15 +206,8 @@ static const char *const fluidsynth_suffixes[] = {
 	nullptr
 };
 
-const struct DecoderPlugin fluidsynth_decoder_plugin = {
-	"fluidsynth",
-	fluidsynth_init,
-	nullptr,
-	nullptr,
-	fluidsynth_file_decode,
-	fluidsynth_scan_file,
-	nullptr,
-	nullptr,
-	fluidsynth_suffixes,
-	nullptr,
-};
+constexpr DecoderPlugin fluidsynth_decoder_plugin =
+	DecoderPlugin("fluidsynth",
+		      fluidsynth_file_decode, fluidsynth_scan_file)
+	.WithInit(fluidsynth_init)
+	.WithSuffixes(fluidsynth_suffixes);

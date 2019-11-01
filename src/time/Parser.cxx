@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2017 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2014-2019 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,30 +28,12 @@
  */
 
 #include "Parser.hxx"
-#include "util/Compiler.h"
+#include "Convert.hxx"
 
 #include <stdexcept>
 
 #include <assert.h>
 #include <time.h>
-
-#if !defined(__GLIBC__) && !defined(_WIN32)
-
-/**
- * Determine the time zone offset in a portable way.
- */
-gcc_const
-static time_t
-GetTimeZoneOffset() noexcept
-{
-	time_t t = 1234567890;
-	struct tm tm;
-	tm.tm_isdst = 0;
-	gmtime_r(&t, &tm);
-	return t - mktime(&tm);
-}
-
-#endif
 
 std::chrono::system_clock::time_point
 ParseTimePoint(const char *s, const char *format)
@@ -65,20 +47,11 @@ ParseTimePoint(const char *s, const char *format)
 	(void)format;
 	throw std::runtime_error("Time parsing not implemented on Windows");
 #else
-	struct tm tm;
+	struct tm tm{};
 	const char *end = strptime(s, format, &tm);
 	if (end == nullptr || *end != 0)
 		throw std::runtime_error("Failed to parse time stamp");
 
-#ifdef __GLIBC__
-	/* timegm() is a GNU extension */
-	const auto t = timegm(&tm);
-#else
-	tm.tm_isdst = 0;
-	const auto t = mktime(&tm) + GetTimeZoneOffset();
-#endif /* !__GLIBC__ */
-
-	return std::chrono::system_clock::from_time_t(t);
-
+	return TimeGm(tm);
 #endif /* !_WIN32 */
 }

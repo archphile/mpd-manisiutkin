@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,12 +20,13 @@
 #ifndef MPD_TAG_REPLAY_GAIN_HXX
 #define MPD_TAG_REPLAY_GAIN_HXX
 
+struct StringView;
 struct ReplayGainInfo;
 
 bool
 ParseReplayGainTag(ReplayGainInfo &info, const char *name, const char *value);
 
 bool
-ParseReplayGainVorbis(ReplayGainInfo &info, const char *entry);
+ParseReplayGainVorbis(ReplayGainInfo &info, StringView entry);
 
 #endif

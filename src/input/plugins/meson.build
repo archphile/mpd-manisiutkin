@@ -6,7 +6,7 @@ if alsa_dep.found()
   input_plugins_sources += 'AlsaInputPlugin.cxx'
 endif
 
-libcdio_paranoia_dep = dependency('libcdio_paranoia', version: '>= 0.4', required: get_option('cdio_paranoia'))
+libcdio_paranoia_dep = dependency('libcdio_paranoia', version: '>= 10.2+0.93+1', required: get_option('cdio_paranoia'))
 conf.set('ENABLE_CDIO_PARANOIA', libcdio_paranoia_dep.found())
 if libcdio_paranoia_dep.found()
   input_plugins_sources += 'CdioParanoiaInputPlugin.cxx'
@@ -42,7 +42,7 @@ qobuz_feature = get_option('qobuz')
 if qobuz_feature.disabled()
   enable_qobuz = false
 else
-  enable_qobuz = curl_dep.found() and yajl_dep.found() and gcrypt_dep.found()
+  enable_qobuz = curl_dep.found() and yajl_dep.found() and crypto_md5_dep.found()
   if not enable_qobuz and qobuz_feature.enabled()
     error('Qobuz requires CURL, libyajl and libgcrypt')
   endif
@@ -93,7 +93,7 @@ input_plugins = static_library(
     nfs_dep,
     smbclient_dep,
     yajl_dep,
-    gcrypt_dep,
+    crypto_md5_dep,
   ],
 )
 

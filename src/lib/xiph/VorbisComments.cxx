@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,8 +18,8 @@
  */
 
 #include "VorbisComments.hxx"
-#include "XiphTags.hxx"
-#include "tag/Table.hxx"
+#include "VorbisPicture.hxx"
+#include "ScanVorbisComment.hxx"
 #include "tag/Handler.hxx"
 #include "tag/Builder.hxx"
 #include "tag/Tag.hxx"
@@ -27,79 +27,68 @@
 #include "tag/ReplayGain.hxx"
 #include "ReplayGainInfo.hxx"
 #include "util/StringView.hxx"
+#include "config.h"
+
+#ifndef HAVE_TREMOR
+#include <vorbis/codec.h>
+#else
+#include <tremor/ivorbiscodec.h>
+#endif /* HAVE_TREMOR */
+
+template<typename F>
+static void
+ForEachUserComment(const vorbis_comment &vc, F &&f)
+{
+	const char *const*const user_comments = vc.user_comments;
+	const int*const comment_lengths = vc.comment_lengths;
+
+	const size_t n = vc.comments;
+	for (size_t i = 0; i < n; ++i)
+		f(StringView{user_comments[i], size_t(comment_lengths[i])});
+}
 
 bool
-vorbis_comments_to_replay_gain(ReplayGainInfo &rgi, char **comments) noexcept
+VorbisCommentToReplayGain(ReplayGainInfo &rgi,
+			  const vorbis_comment &vc) noexcept
 {
 	rgi.Clear();
 
 	bool found = false;
 
-	while (*comments) {
-		if (ParseReplayGainVorbis(rgi, *comments))
+	ForEachUserComment(vc, [&](StringView s){
+		if (ParseReplayGainVorbis(rgi, s.data))
 			found = true;
-
-		comments++;
-	}
+	});
 
 	return found;
 }
 
-/**
- * Check if the comment's name equals the passed name, and if so, copy
- * the comment value into the tag.
- */
-static bool
-vorbis_copy_comment(const char *comment,
-		    const char *name, TagType tag_type,
-		    TagHandler &handler) noexcept
-{
-	const char *value;
-
-	value = vorbis_comment_value(comment, name);
-	if (value != nullptr) {
-		handler.OnTag(tag_type, value);
-		return true;
-	}
-
-	return false;
-}
-
 static void
-vorbis_scan_comment(const char *comment, TagHandler &handler) noexcept
+vorbis_scan_comment(StringView comment, TagHandler &handler) noexcept
 {
-	if (handler.WantPair()) {
-		const auto split = StringView(comment).Split('=');
-		if (!split.first.empty() && !split.second.IsNull())
-			handler.OnPair(split.first, split.second);
-	}
+	const auto picture_b64 = handler.WantPicture()
+		? GetVorbisCommentValue(comment, "METADATA_BLOCK_PICTURE")
+		: nullptr;
+	if (!picture_b64.IsNull())
+		return ScanVorbisPicture(picture_b64, handler);
 
-	for (const struct tag_table *i = xiph_tags; i->name != nullptr; ++i)
-		if (vorbis_copy_comment(comment, i->name, i->type,
-					handler))
-			return;
-
-	for (unsigned i = 0; i < TAG_NUM_OF_ITEM_TYPES; ++i)
-		if (vorbis_copy_comment(comment,
-					tag_item_names[i], TagType(i),
-					handler))
-			return;
+	ScanVorbisComment(comment, handler);
 }
 
 void
-vorbis_comments_scan(char **comments, TagHandler &handler) noexcept
+VorbisCommentScan(const vorbis_comment &vc, TagHandler &handler) noexcept
 {
-	while (*comments)
-		vorbis_scan_comment(*comments++, handler);
-
+	ForEachUserComment(vc, [&](StringView s){
+		vorbis_scan_comment(s, handler);
+	});
 }
 
 std::unique_ptr<Tag>
-vorbis_comments_to_tag(char **comments) noexcept
+VorbisCommentToTag(const vorbis_comment &vc) noexcept
 {
 	TagBuilder tag_builder;
 	AddTagHandler h(tag_builder);
-	vorbis_comments_scan(comments, h);
+	VorbisCommentScan(vc, h);
 	return tag_builder.empty()
 		? nullptr
 		: tag_builder.CommitNew();

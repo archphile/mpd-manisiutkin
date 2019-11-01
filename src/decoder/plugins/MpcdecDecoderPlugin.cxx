@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,14 +24,13 @@
 #include "pcm/Traits.hxx"
 #include "tag/Handler.hxx"
 #include "util/Domain.hxx"
-#include "util/Macros.hxx"
 #include "util/Clamp.hxx"
 #include "util/ScopeExit.hxx"
 #include "Log.hxx"
 
 #include <mpc/mpcdec.h>
 
-#include <exception>
+#include <iterator>
 
 #include <math.h>
 
@@ -137,6 +136,28 @@ mpc_to_mpd_buffer(MpcdecSampleTraits::pointer_type dest,
 		*dest++ = mpc_to_mpd_sample(*src++);
 }
 
+static constexpr ReplayGainTuple
+ImportMpcdecReplayGain(mpc_uint16_t gain, mpc_uint16_t peak) noexcept
+{
+	auto t = ReplayGainTuple::Undefined();
+
+	if (gain != 0 && peak != 0) {
+		t.gain = MPC_OLD_GAIN_REF - (gain  / 256.);
+		t.peak = pow(10, peak / 256. / 20) / 32767;
+	}
+
+	return t;
+}
+
+static constexpr ReplayGainInfo
+ImportMpcdecReplayGain(const mpc_streaminfo &info) noexcept
+{
+	auto rgi = ReplayGainInfo::Undefined();
+	rgi.album = ImportMpcdecReplayGain(info.gain_album, info.peak_album);
+	rgi.track = ImportMpcdecReplayGain(info.gain_title, info.peak_title);
+	return rgi;
+}
+
 static void
 mpcdec_decode(DecoderClient &client, InputStream &is)
 {
@@ -167,14 +188,11 @@ mpcdec_decode(DecoderClient &client, InputStream &is)
 					     mpcdec_sample_format,
 					     info.channels);
 
-	ReplayGainInfo rgi;
-	rgi.Clear();
-	rgi.album.gain = MPC_OLD_GAIN_REF  - (info.gain_album  / 256.);
-	rgi.album.peak = pow(10, info.peak_album / 256. / 20) / 32767;
-	rgi.track.gain = MPC_OLD_GAIN_REF  - (info.gain_title  / 256.);
-	rgi.track.peak = pow(10, info.peak_title / 256. / 20) / 32767;
-
-	client.SubmitReplayGain(&rgi);
+	{
+		const auto rgi = ImportMpcdecReplayGain(info);
+		if (rgi.IsDefined())
+			client.SubmitReplayGain(&rgi);
+	}
 
 	client.Ready(audio_format, is.IsSeekable(),
 		     SongTime::FromS(mpc_streaminfo_get_length(&info)));
@@ -218,7 +236,7 @@ mpcdec_decode(DecoderClient &client, InputStream &is)
 		mpc_uint32_t ret = frame.samples;
 		ret *= info.channels;
 
-		MpcdecSampleTraits::value_type chunk[ARRAY_SIZE(sample_buffer)];
+		MpcdecSampleTraits::value_type chunk[std::size(sample_buffer)];
 		mpc_to_mpd_buffer(chunk, sample_buffer, ret);
 
 		long bit_rate = unsigned(frame.bits) * audio_format.sample_rate
@@ -268,15 +286,6 @@ mpcdec_scan_stream(InputStream &is, TagHandler &handler) noexcept
 
 static const char *const mpcdec_suffixes[] = { "mpc", nullptr };
 
-const struct DecoderPlugin mpcdec_decoder_plugin = {
-	"mpcdec",
-	nullptr,
-	nullptr,
-	mpcdec_decode,
-	nullptr,
-	nullptr,
-	mpcdec_scan_stream,
-	nullptr,
-	mpcdec_suffixes,
-	nullptr,
-};
+constexpr DecoderPlugin mpcdec_decoder_plugin =
+	DecoderPlugin("mpcdec", mpcdec_decode, mpcdec_scan_stream)
+	.WithSuffixes(mpcdec_suffixes);

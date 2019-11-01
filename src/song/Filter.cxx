@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,24 +25,17 @@
 #include "TagSongFilter.hxx"
 #include "ModifiedSinceSongFilter.hxx"
 #include "AudioFormatSongFilter.hxx"
-#include "LightSong.hxx"
 #include "AudioParser.hxx"
 #include "tag/ParseName.hxx"
-#include "tag/Tag.hxx"
-#include "time/ChronoUtil.hxx"
 #include "time/ISO8601.hxx"
 #include "util/CharUtil.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
-#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringStrip.hxx"
 #include "util/StringView.hxx"
 #include "util/ASCII.hxx"
 #include "util/UriUtil.hxx"
-#include "lib/icu/CaseFold.hxx"
-
-#include <exception>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -120,7 +113,7 @@ ParseTimeStamp(const char *s)
 		return std::chrono::system_clock::from_time_t((time_t)value);
 
 	/* try ISO 8601 */
-	return ParseISO8601(s);
+	return ParseISO8601(s).first;
 }
 
 static constexpr bool

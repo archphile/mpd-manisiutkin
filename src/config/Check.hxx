@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,9 +19,6 @@
 
 #ifndef MPD_CONFIG_CHECK_HXX
 #define MPD_CONFIG_CHECK_HXX
-
-#include "Option.hxx"
-#include "util/Compiler.h"
 
 struct ConfigData;
 

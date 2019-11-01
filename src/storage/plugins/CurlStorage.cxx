@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,27 +25,25 @@
 #include "lib/curl/Init.hxx"
 #include "lib/curl/Global.hxx"
 #include "lib/curl/Slist.hxx"
+#include "lib/curl/String.hxx"
 #include "lib/curl/Request.hxx"
 #include "lib/curl/Handler.hxx"
+#include "lib/curl/Escape.hxx"
 #include "lib/expat/ExpatParser.hxx"
 #include "fs/Traits.hxx"
-#include "event/Call.hxx"
 #include "event/DeferEvent.hxx"
 #include "thread/Mutex.hxx"
 #include "thread/Cond.hxx"
-#include "time/ChronoUtil.hxx"
 #include "time/Parser.hxx"
 #include "util/ASCII.hxx"
-#include "util/IterableSplitString.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/StringCompare.hxx"
 #include "util/StringFormat.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriExtract.hxx"
 
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <list>
+#include <utility>
 
 #include <assert.h>
 
@@ -77,26 +75,15 @@ CurlStorage::MapUTF8(const char *uri_utf8) const noexcept
 	if (StringIsEmpty(uri_utf8))
 		return base;
 
-	CurlEasy easy;
-	std::string path_esc;
-
-	for (auto elt: IterableSplitString(uri_utf8, '/')) {
-		char *elt_esc = easy.Escape(elt.data, elt.size);
-		if (!path_esc.empty())
-			path_esc.push_back('/');
-		path_esc += elt_esc;
-		curl_free(elt_esc);
-	}
-
+	std::string path_esc = CurlEscapeUriPath(uri_utf8);
 	return PathTraitsUTF8::Build(base.c_str(), path_esc.c_str());
 }
 
 const char *
 CurlStorage::MapToRelativeUTF8(const char *uri_utf8) const noexcept
 {
-	// TODO: escape/unescape?
-
-	return PathTraitsUTF8::Relative(base.c_str(), uri_utf8);
+	return PathTraitsUTF8::Relative(base.c_str(),
+					CurlUnescape(uri_utf8).c_str());
 }
 
 class BlockingHttpRequest : protected CurlResponseHandler {
@@ -129,6 +116,10 @@ public:
 
 		if (postponed_error)
 			std::rethrow_exception(postponed_error);
+	}
+
+	CURL *GetEasy() noexcept {
+		return request.Get();
 	}
 
 protected:
@@ -268,6 +259,8 @@ public:
 		 CommonExpatParser(ExpatNamespaceSeparator{'|'})
 	{
 		request.SetOption(CURLOPT_CUSTOMREQUEST, "PROPFIND");
+		request.SetOption(CURLOPT_FOLLOWLOCATION, 1l);
+		request.SetOption(CURLOPT_MAXREDIRS, 1l);
 
 		request_headers.Append(StringFormat<40>("depth: %u", depth));
 
@@ -276,6 +269,7 @@ public:
 		request.SetOption(CURLOPT_POSTFIELDS,
 				  "<?xml version=\"1.0\"?>\n"
 				  "<a:propfind xmlns:a=\"DAV:\">"
+				  "<a:prop><a:resourcetype/></a:prop>"
 				  "<a:prop><a:getcontenttype/></a:prop>"
 				  "<a:prop><a:getcontentlength/></a:prop>"
 				  "</a:propfind>");
@@ -283,6 +277,7 @@ public:
 		// TODO: send request body
 	}
 
+	using BlockingHttpRequest::GetEasy;
 	using BlockingHttpRequest::Wait;
 
 protected:
@@ -453,9 +448,7 @@ CurlStorage::GetInfo(const char *uri_utf8, gcc_unused bool follow)
 {
 	// TODO: escape the given URI
 
-	std::string uri = base;
-	uri += uri_utf8;
-
+	const auto uri = MapUTF8(uri_utf8);
 	return HttpGetInfoOperation(*curl, uri.c_str()).Perform();
 }
 
@@ -502,7 +495,11 @@ private:
 		if (path == nullptr)
 			return nullptr;
 
-		path = StringAfterPrefix(path, base_path.c_str());
+		/* kludge: ignoring case in this comparison to avoid
+		   false negatives if the web server uses a different
+		   case in hex digits in escaped characters; TODO:
+		   implement properly */
+		path = StringAfterPrefixIgnoreCase(path, base_path.c_str());
 		if (path == nullptr || *path == 0)
 			return nullptr;
 
@@ -528,10 +525,7 @@ protected:
 		if (escaped_name.IsNull())
 			return;
 
-		// TODO: unescape
-		const auto name = escaped_name;
-
-		entries.emplace_front(std::string(name.data, name.size));
+		entries.emplace_front(CurlUnescape(GetEasy(), escaped_name));
 
 		auto &info = entries.front().info;
 		info = StorageFileInfo(r.collection
@@ -545,10 +539,7 @@ protected:
 std::unique_ptr<StorageDirectoryReader>
 CurlStorage::OpenDirectory(const char *uri_utf8)
 {
-	// TODO: escape the given URI
-
-	std::string uri = base;
-	uri += uri_utf8;
+	std::string uri = MapUTF8(uri_utf8);
 
 	/* collection URIs must end with a slash */
 	if (uri.back() != '/')

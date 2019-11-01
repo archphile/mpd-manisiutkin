@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "config.h"
 #include "HttpdOutputPlugin.hxx"
 #include "HttpdInternal.hxx"
 #include "HttpdClient.hxx"
@@ -26,19 +25,16 @@
 #include "encoder/Configured.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/ToString.hxx"
 #include "Page.hxx"
 #include "IcyMetaDataServer.hxx"
 #include "event/Call.hxx"
 #include "util/Domain.hxx"
 #include "util/DeleteDisposer.hxx"
-#include "Log.hxx"
 #include "config/Net.hxx"
 
 #include <assert.h>
 
 #include <string.h>
-#include <errno.h>
 
 const Domain httpd_output_domain("httpd_output");
 

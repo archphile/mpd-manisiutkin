@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,6 @@
 #include "PlaylistError.hxx"
 #include "queue/Playlist.hxx"
 #include "queue/QueuePrint.hxx"
-#include "SongPrint.hxx"
-#include "Partition.hxx"
-#include "Instance.hxx"
-#include "db/Interface.hxx"
-#include "client/Response.hxx"
 
 #define SONG_FILE "file: "
 #define SONG_TIME "Time: "

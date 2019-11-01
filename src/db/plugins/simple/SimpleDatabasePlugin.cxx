@@ -33,7 +33,6 @@
 #include "DatabaseSave.hxx"
 #include "db/DatabaseLock.hxx"
 #include "db/DatabaseError.hxx"
-#include "tag/Mask.hxx"
 #include "fs/io/TextFile.hxx"
 #include "fs/io/BufferedOutputStream.hxx"
 #include "fs/io/FileOutputStream.hxx"
@@ -42,6 +41,8 @@
 #include "fs/FileSystem.hxx"
 #include "util/CharUtil.hxx"
 #include "util/Domain.hxx"
+#include "util/ConstBuffer.hxx"
+#include "util/RecursiveMap.hxx"
 #include "Log.hxx"
 
 #ifdef ENABLE_ZLIB
@@ -329,11 +330,11 @@ SimpleDatabase::Visit(const DatabaseSelection &selection,
 			    "No such directory");
 }
 
-std::map<std::string, std::set<std::string>>
+RecursiveMap<std::string>
 SimpleDatabase::CollectUniqueTags(const DatabaseSelection &selection,
-				  TagType tag_type, TagType group) const
+				  ConstBuffer<TagType> tag_types) const
 {
-	return ::CollectUniqueTags(*this, selection, tag_type, group);
+	return ::CollectUniqueTags(*this, selection, tag_types);
 }
 
 DatabaseStats

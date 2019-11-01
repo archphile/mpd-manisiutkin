@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,6 @@
 #ifndef MPD_CUE_PLAYLIST_PLUGIN_HXX
 #define MPD_CUE_PLAYLIST_PLUGIN_HXX
 
-extern const struct playlist_plugin cue_playlist_plugin;
+extern const struct PlaylistPlugin cue_playlist_plugin;
 
 #endif

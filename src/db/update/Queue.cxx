@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 bool
 UpdateQueue::Push(SimpleDatabase &db, Storage &storage,
-		  const char *path, bool discard, unsigned id)
+		  const char *path, bool discard, unsigned id) noexcept
 {
 	if (update_queue.size() >= MAX_UPDATE_QUEUE_SIZE)
 		return false;
@@ -31,7 +31,7 @@ UpdateQueue::Push(SimpleDatabase &db, Storage &storage,
 }
 
 UpdateQueueItem
-UpdateQueue::Pop()
+UpdateQueue::Pop() noexcept
 {
 	if (update_queue.empty())
 		return UpdateQueueItem();
@@ -42,7 +42,7 @@ UpdateQueue::Pop()
 }
 
 void
-UpdateQueue::Erase(SimpleDatabase &db)
+UpdateQueue::Erase(SimpleDatabase &db) noexcept
 {
 	for (auto i = update_queue.begin(), end = update_queue.end();
 	     i != end;) {
@@ -54,7 +54,7 @@ UpdateQueue::Erase(SimpleDatabase &db)
 }
 
 void
-UpdateQueue::Erase(Storage &storage)
+UpdateQueue::Erase(Storage &storage) noexcept
 {
 	for (auto i = update_queue.begin(), end = update_queue.end();
 	     i != end;) {

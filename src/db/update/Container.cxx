@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,31 +30,6 @@
 #include "storage/FileInfo.hxx"
 #include "Log.hxx"
 
-Directory *
-UpdateWalk::MakeDirectoryIfModified(Directory &parent, const char *name,
-				    const StorageFileInfo &info) noexcept
-{
-	Directory *directory = parent.FindChild(name);
-
-	// directory exists already
-	if (directory != nullptr) {
-		if (directory->IsMount())
-			return nullptr;
-
-		if (directory->mtime == info.mtime && !walk_discard) {
-			/* not modified */
-			return nullptr;
-		}
-
-		editor.DeleteDirectory(directory);
-		modified = true;
-	}
-
-	directory = parent.MakeChild(name);
-	directory->mtime = info.mtime;
-	return directory;
-}
-
 static bool
 SupportsContainerSuffix(const DecoderPlugin &plugin,
 			const char *suffix) noexcept
@@ -84,12 +59,12 @@ UpdateWalk::UpdateContainerFile(Directory &directory,
 	Directory *contdir;
 	{
 		const ScopeDatabaseLock protect;
-		contdir = MakeDirectoryIfModified(directory, name, info);
+		contdir = MakeVirtualDirectoryIfModified(directory, name,
+							 info,
+							 DEVICE_CONTAINER);
 		if (contdir == nullptr)
 			/* not modified */
 			return true;
-
-		contdir->device = DEVICE_CONTAINER;
 	}
 
 	const auto pathname = storage.MapFS(contdir->GetPath());
@@ -109,12 +84,15 @@ UpdateWalk::UpdateContainerFile(Directory &directory,
 			}
 
 			for (auto &vtrack : v) {
-				auto song = Song::NewFrom(std::move(vtrack), *contdir);
+				auto song = std::make_unique<Song>(std::move(vtrack),
+				*contdir);
 
 				// shouldn't be necessary but it's there..
 				song->mtime = info.mtime;
 
-				FormatDefault(update_domain, "added %s/%s", contdir->GetPath(), song->uri);
+				FormatDefault(update_domain, "added %s/%s",
+				contdir->GetPath(),
+				song->filename.c_str());
 
 				{
 					const ScopeDatabaseLock protect;

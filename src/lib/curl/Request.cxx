@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2008-2018 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,17 +53,15 @@ CurlRequest::CurlRequest(CurlGlobal &_global,
 {
 	error_buffer[0] = 0;
 
-	easy.SetOption(CURLOPT_PRIVATE, (void *)this);
-	easy.SetOption(CURLOPT_USERAGENT, "Music Player Daemon " VERSION);
-	easy.SetOption(CURLOPT_HEADERFUNCTION, _HeaderFunction);
-	easy.SetOption(CURLOPT_WRITEHEADER, this);
-	easy.SetOption(CURLOPT_WRITEFUNCTION, WriteFunction);
-	easy.SetOption(CURLOPT_WRITEDATA, this);
+	easy.SetPrivate((void *)this);
+	easy.SetUserAgent("Music Player Daemon " VERSION);
+	easy.SetHeaderFunction(_HeaderFunction, this);
+	easy.SetWriteFunction(WriteFunction, this);
 	easy.SetOption(CURLOPT_NETRC, 1l);
-	easy.SetOption(CURLOPT_ERRORBUFFER, error_buffer);
-	easy.SetOption(CURLOPT_NOPROGRESS, 1l);
-	easy.SetOption(CURLOPT_NOSIGNAL, 1l);
-	easy.SetOption(CURLOPT_CONNECTTIMEOUT, 10l);
+	easy.SetErrorBuffer(error_buffer);
+	easy.SetNoProgress();
+	easy.SetNoSignal();
+	easy.SetConnectTimeout(10);
 	easy.SetOption(CURLOPT_HTTPAUTH, (long) CURLAUTH_ANY);
 }
 
@@ -77,7 +75,7 @@ CurlRequest::Start()
 {
 	assert(!registered);
 
-	global.Add(easy.Get(), *this);
+	global.Add(*this);
 	registered = true;
 }
 
@@ -95,7 +93,7 @@ CurlRequest::Stop() noexcept
 	if (!registered)
 		return;
 
-	global.Remove(easy.Get());
+	global.Remove(*this);
 	registered = false;
 }
 
@@ -122,7 +120,7 @@ CurlRequest::Resume() noexcept
 {
 	assert(registered);
 
-	curl_easy_pause(easy.Get(), CURLPAUSE_CONT);
+	easy.Unpause();
 
 	if (IsCurlOlderThan(0x072000))
 		/* libcurl older than 7.32.0 does not update
@@ -142,7 +140,7 @@ CurlRequest::FinishHeaders()
 	state = State::BODY;
 
 	long status = 0;
-	curl_easy_getinfo(easy.Get(), CURLINFO_RESPONSE_CODE, &status);
+	easy.GetInfo(CURLINFO_RESPONSE_CODE, &status);
 
 	handler.OnHeaders(status, std::move(headers));
 }
@@ -227,14 +225,14 @@ CurlRequest::HeaderFunction(StringView s) noexcept
 }
 
 size_t
-CurlRequest::_HeaderFunction(void *ptr, size_t size, size_t nmemb,
+CurlRequest::_HeaderFunction(char *ptr, size_t size, size_t nmemb,
 			     void *stream) noexcept
 {
 	CurlRequest &c = *(CurlRequest *)stream;
 
 	size *= nmemb;
 
-	c.HeaderFunction({(const char *)ptr, size});
+	c.HeaderFunction({ptr, size});
 	return size;
 }
 
@@ -261,7 +259,7 @@ CurlRequest::DataReceived(const void *ptr, size_t received_size) noexcept
 }
 
 size_t
-CurlRequest::WriteFunction(void *ptr, size_t size, size_t nmemb,
+CurlRequest::WriteFunction(char *ptr, size_t size, size_t nmemb,
 			   void *stream) noexcept
 {
 	CurlRequest &c = *(CurlRequest *)stream;

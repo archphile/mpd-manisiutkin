@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2008-2018 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -127,7 +127,7 @@ public:
 	}
 
 	void SetUrl(const char *url) {
-		easy.SetOption(CURLOPT_URL, url);
+		easy.SetURL(url);
 	}
 
 	/**
@@ -160,11 +160,11 @@ private:
 	void OnPostponeError() noexcept;
 
 	/** called by curl when new data is available */
-	static size_t _HeaderFunction(void *ptr, size_t size, size_t nmemb,
+	static size_t _HeaderFunction(char *ptr, size_t size, size_t nmemb,
 				      void *stream) noexcept;
 
 	/** called by curl when new data is available */
-	static size_t WriteFunction(void *ptr, size_t size, size_t nmemb,
+	static size_t WriteFunction(char *ptr, size_t size, size_t nmemb,
 				    void *stream) noexcept;
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,8 +30,8 @@
 
 #include <memory>
 
+#include <assert.h>
 #include <stddef.h>
-#include <unistd.h>
 
 static uint8_t zero[256];
 

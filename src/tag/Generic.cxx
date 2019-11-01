@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,8 +25,6 @@
 #include "input/InputStream.hxx"
 #include "input/LocalOpen.hxx"
 #include "config.h"
-
-#include <exception>
 
 bool
 ScanGenericTags(InputStream &is, TagHandler &handler)

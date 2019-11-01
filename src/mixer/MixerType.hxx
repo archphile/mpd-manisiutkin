@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,6 @@
 
 #ifndef MPD_MIXER_TYPE_HXX
 #define MPD_MIXER_TYPE_HXX
-
-#include "util/Compiler.h"
 
 enum class MixerType {
 	/** mixer disabled */

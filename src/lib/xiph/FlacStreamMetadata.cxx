@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,20 +19,24 @@
 
 #include "FlacStreamMetadata.hxx"
 #include "FlacAudioFormat.hxx"
-#include "XiphTags.hxx"
+#include "ScanVorbisComment.hxx"
 #include "CheckAudioFormat.hxx"
 #include "MixRampInfo.hxx"
 #include "tag/Handler.hxx"
-#include "tag/Table.hxx"
 #include "tag/Builder.hxx"
 #include "tag/Tag.hxx"
-#include "tag/VorbisComment.hxx"
 #include "tag/ReplayGain.hxx"
 #include "tag/MixRamp.hxx"
 #include "ReplayGainInfo.hxx"
 #include "util/StringView.hxx"
 
 #include <assert.h>
+
+static StringView
+ToStringView(const FLAC__StreamMetadata_VorbisComment_Entry &entry) noexcept
+{
+	return {(const char *)entry.entry, entry.length};
+}
 
 bool
 flac_parse_replay_gain(ReplayGainInfo &rgi,
@@ -44,8 +48,7 @@ flac_parse_replay_gain(ReplayGainInfo &rgi,
 
 	const auto *comments = vc.comments;
 	for (FLAC__uint32 i = 0, n = vc.num_comments; i < n; ++i)
-		if (ParseReplayGainVorbis(rgi,
-					  (const char *)comments[i].entry))
+		if (ParseReplayGainVorbis(rgi, ToStringView(comments[i])))
 			found = true;
 
 	return found;
@@ -58,61 +61,9 @@ flac_parse_mixramp(const FLAC__StreamMetadata_VorbisComment &vc)
 
 	const auto *comments = vc.comments;
 	for (FLAC__uint32 i = 0, n = vc.num_comments; i < n; ++i)
-		ParseMixRampVorbis(mix_ramp,
-				   (const char *)comments[i].entry);
+		ParseMixRampVorbis(mix_ramp, ToStringView(comments[i]));
 
 	return mix_ramp;
-}
-
-/**
- * Checks if the specified name matches the entry's name, and if yes,
- * returns the comment value;
- */
-static const char *
-flac_comment_value(const FLAC__StreamMetadata_VorbisComment_Entry *entry,
-		   const char *name) noexcept
-{
-	return vorbis_comment_value((const char *)entry->entry, name);
-}
-
-/**
- * Check if the comment's name equals the passed name, and if so, copy
- * the comment value into the tag.
- */
-static bool
-flac_copy_comment(const FLAC__StreamMetadata_VorbisComment_Entry *entry,
-		  const char *name, TagType tag_type,
-		  TagHandler &handler) noexcept
-{
-	const char *value = flac_comment_value(entry, name);
-	if (value != nullptr) {
-		handler.OnTag(tag_type, value);
-		return true;
-	}
-
-	return false;
-}
-
-static void
-flac_scan_comment(const FLAC__StreamMetadata_VorbisComment_Entry *entry,
-		  TagHandler &handler) noexcept
-{
-	if (handler.WantPair()) {
-		const StringView comment((const char *)entry->entry);
-		const auto split = StringView(comment).Split('=');
-		if (!split.first.empty() && !split.second.IsNull())
-			handler.OnPair(split.first, split.second);
-	}
-
-	for (const struct tag_table *i = xiph_tags; i->name != nullptr; ++i)
-		if (flac_copy_comment(entry, i->name, i->type, handler))
-			return;
-
-	for (unsigned i = 0; i < TAG_NUM_OF_ITEM_TYPES; ++i)
-		if (flac_copy_comment(entry,
-				      tag_item_names[i], (TagType)i,
-				      handler))
-			return;
 }
 
 static void
@@ -120,8 +71,7 @@ flac_scan_comments(const FLAC__StreamMetadata_VorbisComment *comment,
 		   TagHandler &handler) noexcept
 {
 	for (unsigned i = 0; i < comment->num_comments; ++i)
-		flac_scan_comment(&comment->comments[i],
-				  handler);
+		ScanVorbisComment(ToStringView(comment->comments[i]), handler);
 }
 
 gcc_pure
@@ -149,6 +99,21 @@ Scan(const FLAC__StreamMetadata_StreamInfo &stream_info,
 	}
 }
 
+static void
+Scan(const FLAC__StreamMetadata_Picture &picture, TagHandler &handler) noexcept
+{
+	if (!handler.WantPicture())
+		return;
+
+	if (picture.mime_type != nullptr &&
+	    StringIsEqual(picture.mime_type, "-->"))
+		/* this is a URL, not image data */
+		return;
+
+	handler.OnPicture(picture.mime_type,
+			  {picture.data, picture.data_length});
+}
+
 void
 flac_scan_metadata(const FLAC__StreamMetadata *block,
 		   TagHandler &handler) noexcept
@@ -161,6 +126,10 @@ flac_scan_metadata(const FLAC__StreamMetadata *block,
 
 	case FLAC__METADATA_TYPE_STREAMINFO:
 		Scan(block->data.stream_info, handler);
+		break;
+
+	case FLAC__METADATA_TYPE_PICTURE:
+		Scan(block->data.picture, handler);
 		break;
 
 	default:

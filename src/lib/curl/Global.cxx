@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2008-2019 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,8 @@
 #include "event/SocketMonitor.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Domain.hxx"
-#include "config.h"
+
+#include <assert.h>
 
 static constexpr Domain curlm_domain("curlm");
 
@@ -48,7 +49,7 @@ public:
 	CurlSocket(CurlGlobal &_global, EventLoop &_loop, SocketDescriptor _fd)
 		:SocketMonitor(_fd, _loop), global(_global) {}
 
-	~CurlSocket() {
+	~CurlSocket() noexcept {
 		/* TODO: sometimes, CURL uses CURL_POLL_REMOVE after
 		   closing the socket, and sometimes, it uses
 		   CURL_POLL_REMOVE just to move the (still open)
@@ -109,9 +110,10 @@ CurlGlobal::CurlGlobal(EventLoop &_loop)
 int
 CurlSocket::SocketFunction(gcc_unused CURL *easy,
 			   curl_socket_t s, int action,
-			   void *userp, void *socketp) noexcept {
+			   void *userp, void *socketp) noexcept
+{
 	auto &global = *(CurlGlobal *)userp;
-	CurlSocket *cs = (CurlSocket *)socketp;
+	auto *cs = (CurlSocket *)socketp;
 
 	assert(global.GetEventLoop().IsInside());
 
@@ -124,18 +126,6 @@ CurlSocket::SocketFunction(gcc_unused CURL *easy,
 		cs = new CurlSocket(global, global.GetEventLoop(),
 				    SocketDescriptor(s));
 		global.Assign(s, *cs);
-	} else {
-#ifdef USE_EPOLL
-		/* when using epoll, we need to unregister the socket
-		   each time this callback is invoked, because older
-		   CURL versions may omit the CURL_POLL_REMOVE call
-		   when the socket has been closed and recreated with
-		   the same file number (bug found in CURL 7.26, CURL
-		   7.33 not affected); in that case, epoll refuses the
-		   EPOLL_CTL_MOD because it does not know the new
-		   socket yet */
-		cs->Cancel();
-#endif
 	}
 
 	unsigned flags = CurlPollToFlags(action);
@@ -153,20 +143,12 @@ CurlSocket::OnSocketReady(unsigned flags) noexcept
 	return true;
 }
 
-/**
- * Runs in the I/O thread.  No lock needed.
- *
- * Throws std::runtime_error on error.
- */
 void
-CurlGlobal::Add(CURL *easy, CurlRequest &request)
+CurlGlobal::Add(CurlRequest &r)
 {
 	assert(GetEventLoop().IsInside());
-	assert(easy != nullptr);
 
-	curl_easy_setopt(easy, CURLOPT_PRIVATE, &request);
-
-	CURLMcode mcode = curl_multi_add_handle(multi.Get(), easy);
+	CURLMcode mcode = curl_multi_add_handle(multi.Get(), r.Get());
 	if (mcode != CURLM_OK)
 		throw FormatRuntimeError("curl_multi_add_handle() failed: %s",
 					 curl_multi_strerror(mcode));
@@ -175,16 +157,18 @@ CurlGlobal::Add(CURL *easy, CurlRequest &request)
 }
 
 void
-CurlGlobal::Remove(CURL *easy) noexcept
+CurlGlobal::Remove(CurlRequest &r) noexcept
 {
 	assert(GetEventLoop().IsInside());
-	assert(easy != nullptr);
 
-	curl_multi_remove_handle(multi.Get(), easy);
-
+	curl_multi_remove_handle(multi.Get(), r.Get());
 	InvalidateSockets();
 }
 
+/**
+ * Find a request by its CURL "easy" handle.
+ */
+gcc_pure
 static CurlRequest *
 ToRequest(CURL *easy) noexcept
 {
@@ -196,11 +180,6 @@ ToRequest(CURL *easy) noexcept
 	return (CurlRequest *)p;
 }
 
-/**
- * Check for finished HTTP responses.
- *
- * Runs in the I/O thread.  The caller must not hold locks.
- */
 inline void
 CurlGlobal::ReadInfo() noexcept
 {
@@ -217,6 +196,20 @@ CurlGlobal::ReadInfo() noexcept
 				request->Done(msg->data.result);
 		}
 	}
+}
+
+void
+CurlGlobal::SocketAction(curl_socket_t fd, int ev_bitmask) noexcept
+{
+	int running_handles;
+	CURLMcode mcode = curl_multi_socket_action(multi.Get(), fd, ev_bitmask,
+						   &running_handles);
+	if (mcode != CURLM_OK)
+		FormatError(curlm_domain,
+			    "curl_multi_socket_action() failed: %s",
+			    curl_multi_strerror(mcode));
+
+	defer_read_info.Schedule();
 }
 
 inline void
@@ -238,11 +231,11 @@ CurlGlobal::UpdateTimeout(long timeout_ms) noexcept
 }
 
 int
-CurlGlobal::TimerFunction(gcc_unused CURLM *_global, long timeout_ms,
+CurlGlobal::TimerFunction(gcc_unused CURLM *_multi, long timeout_ms,
 			  void *userp) noexcept
 {
 	auto &global = *(CurlGlobal *)userp;
-	assert(_global == global.multi.Get());
+	assert(_multi == global.multi.Get());
 
 	global.UpdateTimeout(timeout_ms);
 	return 0;
@@ -252,18 +245,4 @@ void
 CurlGlobal::OnTimeout() noexcept
 {
 	SocketAction(CURL_SOCKET_TIMEOUT, 0);
-}
-
-void
-CurlGlobal::SocketAction(curl_socket_t fd, int ev_bitmask) noexcept
-{
-	int running_handles;
-	CURLMcode mcode = curl_multi_socket_action(multi.Get(), fd, ev_bitmask,
-						   &running_handles);
-	if (mcode != CURLM_OK)
-		FormatError(curlm_domain,
-			    "curl_multi_socket_action() failed: %s",
-			    curl_multi_strerror(mcode));
-
-	defer_read_info.Schedule();
 }

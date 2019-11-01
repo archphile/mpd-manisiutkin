@@ -2,15 +2,99 @@ ver 0.22 (not yet released)
 * protocol
   - "findadd"/"searchadd"/"searchaddpl" support the "sort" and
     "window" parameters
+  - add command "readpicture" to download embedded pictures
+  - relax the ISO 8601 parser: allow omitting the time of day and the "Z"
+    suffix
 * tags
-  - new tag "Grouping" (for ID3 "TIT1")
+  - new tags "Grouping" (for ID3 "TIT1") and "Work"
 * input
+  - curl: support "charset" parameter in URI fragment
   - ffmpeg: allow partial reads
 * archive
   - iso9660: support seeking
+* playlist
+  - cue: integrate contents in database
+* decoder
+  - mad: remove option "gapless", always do gapless
+  - sidplay: add option "default_genre"
+  - sidplay: map SID name field to "Album" tag
+* playlist
+  - flac: support reading CUE sheets from remote FLAC files
 * filter
   - ffmpeg: new plugin based on FFmpeg's libavfilter library
   - hdcd: new plugin based on FFmpeg's "af_hdcd" for HDCD playback
+  - volume: convert S16 to S24 to preserve quality and reduce dithering noise
+* output
+  - jack: add option "auto_destination_ports"
+  - jack: report error details
+  - pulse: add option "media_role"
+* lower the real-time priority from 50 to 40
+* switch to C++17
+  - GCC 7 or clang 4 (or newer) recommended
+
+ver 0.21.16 (2019/10/16)
+* queue
+  - fix relative destination offset when moving a range
+* storage
+  - curl: request the "resourcetype" property to fix database update
+  - curl: URL-encode more paths
+  - curl: follow redirects for collections without trailing slash
+* update
+  - fix crash when music_directory is not a directory
+* fix build with iconv() instead of ICU
+
+ver 0.21.15 (2019/09/25)
+* decoder
+  - dsdiff, dsf: fix displayed bit rate
+  - mpcdec: fix bogus ReplayGain values
+* output
+  - solaris: fix build with glibc 2.30
+
+ver 0.21.14 (2019/08/21)
+* decoder
+  - sidplay: show track durations in database
+  - sidplay: convert tag values from Windows-1252 charset
+  - sidplay: strip text from "Date" tag
+* player
+  - fix crash after song change
+  - fix seek position after restarting the decoder
+* protocol
+  - include command name in error responses
+
+ver 0.21.13 (2019/08/06)
+* input
+  - cdio_paranoia: require libcdio-paranoia 10.2+0.93+1
+* decoder
+  - mad: fix crackling sound (0.21.12 regression)
+* output
+  - jack: improved Windows compatibility
+
+ver 0.21.12 (2019/08/03)
+* decoder
+  - mad: update bit rate after seeking
+  - mad: fix several bugs preventing the plugin from decoding the last frame
+  - opus: ignore case in replay gain tag names
+  - opus, vorbis: decode the "end of stream" packet
+* output
+  - jack: fix mono-to-stereo conversion
+* player
+  - don't restart unseekable song after failed seek attempt
+* Windows
+  - support backslash in relative URIs loaded from playlists
+
+ver 0.21.11 (2019/07/03)
+* input
+  - tidal: deprecated because Tidal has changed the protocol
+* decoder
+  - wildmidi: log error if library initialization fails
+* output
+  - alsa: fix busy loop while draining
+  - alsa: fix missing drain call
+  - alsa: improve xrun-avoiding silence generator
+  - alsa: log when generating silence due to slow decoder
+  - alsa, osx: fix distortions with DSD_U32 and DoP on 32 bit CPUs
+* protocol
+  - fix "list" with multiple "group" levels
 
 ver 0.21.10 (2019/06/05)
 * decoder

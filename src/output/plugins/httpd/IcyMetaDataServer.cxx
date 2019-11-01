@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,8 @@
 #include "util/FormatString.hxx"
 #include "util/AllocatedString.hxx"
 #include "util/TruncateString.hxx"
-#include "util/Macros.hxx"
+
+#include <iterator>
 
 #include <string.h>
 
@@ -97,7 +98,7 @@ icy_server_metadata_page(const Tag &tag, const TagType *types) noexcept
 
 	// Length + Metadata - "StreamTitle='';StreamUrl='';" = 4081 - 28
 	char stream_title[(1 + 255 - 28) * 16];
-	char *p = stream_title, *const end = stream_title + ARRAY_SIZE(stream_title);
+	char *p = stream_title, *const end = stream_title + std::size(stream_title);
 	stream_title[0] =  '\0';
 
 	while (p < end && item <= last_item) {

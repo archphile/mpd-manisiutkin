@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "filter/Filter.hxx"
 #include "filter/Prepared.hxx"
 #include "filter/plugins/ReplayGainFilterPlugin.hxx"
-#include "pcm/PcmMix.hxx"
+#include "pcm/Mix.hxx"
 #include "thread/Mutex.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/RuntimeError.hxx"
@@ -99,16 +99,21 @@ try {
 	assert(audio_format.IsValid());
 
 	/* the replay_gain filter cannot fail here */
-	if (prepared_replay_gain_filter) {
-		replay_gain_serial = 0;
-		replay_gain_filter =
-			prepared_replay_gain_filter->Open(audio_format);
-	}
-
 	if (prepared_other_replay_gain_filter) {
 		other_replay_gain_serial = 0;
 		other_replay_gain_filter =
 			prepared_other_replay_gain_filter->Open(audio_format);
+	}
+
+	if (prepared_replay_gain_filter) {
+		replay_gain_serial = 0;
+		replay_gain_filter =
+			prepared_replay_gain_filter->Open(audio_format);
+
+		audio_format = replay_gain_filter->GetOutAudioFormat();
+
+		assert(replay_gain_filter->GetOutAudioFormat() ==
+		       other_replay_gain_filter->GetOutAudioFormat());
 	}
 
 	filter = prepared_filter.Open(audio_format);
@@ -211,7 +216,7 @@ AudioOutputSource::Fill(Mutex &mutex)
 {
 	if (current_chunk != nullptr && pending_tag == nullptr &&
 	    pending_data.empty())
-		pipe.Consume(*std::exchange(current_chunk, nullptr));
+		DropCurrentChunk();
 
 	if (current_chunk != nullptr)
 		return true;
@@ -242,7 +247,7 @@ AudioOutputSource::ConsumeData(size_t nbytes) noexcept
 	pending_data.skip_front(nbytes);
 
 	if (pending_data.empty())
-		pipe.Consume(*std::exchange(current_chunk, nullptr));
+		DropCurrentChunk();
 }
 
 ConstBuffer<void>

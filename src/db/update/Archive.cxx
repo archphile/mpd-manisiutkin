@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,13 +36,6 @@
 #include <exception>
 
 #include <string.h>
-
-static Directory *
-LockFindChild(Directory &directory, const char *name) noexcept
-{
-	const ScopeDatabaseLock protect;
-	return directory.FindChild(name);
-}
 
 static Directory *
 LockMakeChild(Directory &directory, const char *name) noexcept
@@ -107,17 +100,17 @@ UpdateWalk::UpdateArchiveTree(ArchiveFile &archive, Directory &directory,
 class UpdateArchiveVisitor final : public ArchiveVisitor {
 	UpdateWalk &walk;
 	ArchiveFile &archive;
-	Directory *directory;
+	Directory &directory;
 
  public:
 	UpdateArchiveVisitor(UpdateWalk &_walk, ArchiveFile &_archive,
-			     Directory *_directory) noexcept
+			     Directory &_directory) noexcept
 		:walk(_walk), archive(_archive), directory(_directory) {}
 
 	virtual void VisitArchiveEntry(const char *path_utf8) override {
 		FormatDebug(update_domain,
 			    "adding archive file: %s", path_utf8);
-		walk.UpdateArchiveTree(archive, *directory, path_utf8);
+		walk.UpdateArchiveTree(archive, directory, path_utf8);
 	}
 };
 
@@ -134,18 +127,17 @@ UpdateWalk::UpdateArchiveFile(Directory &parent, const char *name,
 			      const StorageFileInfo &info,
 			      const ArchivePlugin &plugin) noexcept
 {
-	Directory *directory = LockFindChild(parent, name);
-
-	if (directory != nullptr && directory->mtime == info.mtime &&
-	    !walk_discard)
-		/* MPD has already scanned the archive, and it hasn't
-		   changed since - don't consider updating it */
-		return;
-
 	const auto path_fs = storage.MapChildFS(parent.GetPath(), name);
 	if (path_fs.IsNull())
 		/* not a local file: skip, because the archive API
 		   supports only local files */
+		return;
+
+	Directory *directory =
+		LockMakeVirtualDirectoryIfModified(parent, name, info,
+						   DEVICE_INARCHIVE);
+	if (directory == nullptr)
+		/* not modified */
 		return;
 
 	/* open archive */
@@ -154,27 +146,13 @@ UpdateWalk::UpdateArchiveFile(Directory &parent, const char *name,
 		file = archive_file_open(&plugin, path_fs);
 	} catch (...) {
 		LogError(std::current_exception());
-		if (directory != nullptr)
-			editor.LockDeleteDirectory(directory);
+		editor.LockDeleteDirectory(directory);
 		return;
 	}
 
 	FormatDebug(update_domain, "archive %s opened", path_fs.c_str());
 
-	if (directory == nullptr) {
-		FormatDebug(update_domain,
-			    "creating archive directory: %s", name);
-
-		const ScopeDatabaseLock protect;
-		directory = parent.CreateChild(name);
-		/* mark this directory as archive (we use device for
-		   this) */
-		directory->device = DEVICE_INARCHIVE;
-	}
-
-	directory->mtime = info.mtime;
-
-	UpdateArchiveVisitor visitor(*this, *file, directory);
+	UpdateArchiveVisitor visitor(*this, *file, *directory);
 	file->Visit(visitor);
 }
 

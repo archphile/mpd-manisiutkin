@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,6 @@
 #include "config.h"
 #include "QueueCommands.hxx"
 #include "Request.hxx"
-#include "CommandError.hxx"
 #include "protocol/RangeArg.hxx"
 #include "db/DatabaseQueue.hxx"
 #include "db/Selection.hxx"
@@ -40,7 +39,6 @@
 #include "util/StringAPI.hxx"
 #include "util/NumberParser.hxx"
 
-#include <memory>
 #include <limits>
 
 static void

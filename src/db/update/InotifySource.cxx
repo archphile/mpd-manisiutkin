@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,6 @@
 #include "Log.hxx"
 
 #include <sys/inotify.h>
-#include <unistd.h>
 #include <errno.h>
 #include <stdint.h>
 #include <limits.h>
@@ -98,7 +97,7 @@ InotifySource::Add(const char *path_fs, unsigned mask)
 }
 
 void
-InotifySource::Remove(unsigned wd)
+InotifySource::Remove(unsigned wd) noexcept
 {
 	auto ifd = GetSocket().ToFileDescriptor();
 	int ret = inotify_rm_watch(ifd.Get(), wd);

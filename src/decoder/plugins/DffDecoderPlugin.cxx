@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2018 The Music Player Daemon Project
+ * Copyright (C) 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 #include "util/StringView.hxx"
 #include "util/FormatString.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriExtract.hxx"
 #include "util/Domain.hxx"
 #include "Log.hxx"
 
@@ -329,7 +329,7 @@ dsdiff_file_decode(DecoderClient &client, Path path_fs) {
 					if (param_lsbitfirst) {
 						bit_reverse_buffer(dsd_data, dsd_data + dsd_size);
 					}
-					cmd = client.SubmitData(nullptr, dsd_data, dsd_size, dsd_samplerate / 1000);
+					cmd = client.SubmitData(nullptr, dsd_data, dsd_size, 8 * dst_size / 1000);
 				}
 			}
 		}
@@ -346,7 +346,7 @@ dsdiff_file_decode(DecoderClient &client, Path path_fs) {
 					if (param_lsbitfirst) {
 						bit_reverse_buffer(dsd_data, dsd_data + dsd_size);
 					}
-					cmd = client.SubmitData(nullptr, dsd_data, dsd_size, dsd_samplerate / 1000);
+					cmd = client.SubmitData(nullptr, dsd_data, dsd_size, 0);
 					if (cmd == DecoderCommand::STOP || cmd == DecoderCommand::SEEK) {
 						break;
 					}
@@ -415,16 +415,9 @@ static const char* const dsdiff_mime_types[] = {
 	nullptr
 };
 
-extern const struct DecoderPlugin dff_decoder_plugin;
-const struct DecoderPlugin dff_decoder_plugin = {
-	"dsdiff",
-	dsdiff_init,
-	dsdiff_finish,
-	nullptr,
-	dsdiff_file_decode,
-	dsdiff_scan_file,
-	nullptr,
-	dsdiff_container_scan,
-	dsdiff_suffixes,
-	dsdiff_mime_types,
-};
+constexpr DecoderPlugin dff_decoder_plugin =
+DecoderPlugin("dsdiff", dsdiff_file_decode, dsdiff_scan_file)
+.WithInit(dsdiff_init, dsdiff_finish)
+.WithContainer(dsdiff_container_scan)
+.WithSuffixes(dsdiff_suffixes)
+.WithMimeTypes(dsdiff_mime_types);

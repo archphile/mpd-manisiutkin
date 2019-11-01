@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,13 +22,10 @@
 #include "StorageInterface.hxx"
 #include "plugins/LocalStorage.hxx"
 #include "config/Data.hxx"
-#include "config/Domain.hxx"
 #include "fs/StandardDirectory.hxx"
 #include "fs/CheckFile.hxx"
-#include "util/UriUtil.hxx"
 #include "util/RuntimeError.hxx"
-
-#include <assert.h>
+#include "util/UriExtract.hxx"
 
 static std::unique_ptr<Storage>
 CreateConfiguredStorageUri(EventLoop &event_loop, const char *uri)

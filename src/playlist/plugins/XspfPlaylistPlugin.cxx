@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,6 @@
 #include "tag/Builder.hxx"
 #include "util/StringView.hxx"
 #include "lib/expat/ExpatParser.hxx"
-#include "Log.hxx"
 
 #include <string.h>
 
@@ -212,15 +211,7 @@ static const char *const xspf_mime_types[] = {
 	nullptr
 };
 
-const struct playlist_plugin xspf_playlist_plugin = {
-	"xspf",
-
-	nullptr,
-	nullptr,
-	nullptr,
-	xspf_open_stream,
-
-	nullptr,
-	xspf_suffixes,
-	xspf_mime_types,
-};
+const PlaylistPlugin xspf_playlist_plugin =
+	PlaylistPlugin("xspf", xspf_open_stream)
+	.WithSuffixes(xspf_suffixes)
+	.WithMimeTypes(xspf_mime_types);

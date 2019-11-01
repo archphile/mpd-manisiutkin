@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@
 #include "thread/Cond.hxx"
 #include "system/Error.hxx"
 #include "util/MimeType.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriExtract.hxx"
 
 class GetChromaprintCommand final
 	: public ThreadBackgroundCommand, ChromaprintDecoderClient, InputStreamHandler
@@ -83,7 +83,8 @@ private:
 
 	/* virtual methods from class DecoderClient */
 	InputStreamPtr OpenUri(const char *uri) override;
-	size_t Read(InputStream &is, void *buffer, size_t length) override;
+	size_t Read(InputStream &is,
+		    void *buffer, size_t length) noexcept override;
 
 	/* virtual methods from class InputStreamHandler */
 	void OnInputStreamReady() noexcept override {
@@ -285,7 +286,8 @@ GetChromaprintCommand::OpenUri(const char *uri2)
 }
 
 size_t
-GetChromaprintCommand::Read(InputStream &is, void *buffer, size_t length)
+GetChromaprintCommand::Read(InputStream &is,
+			    void *buffer, size_t length) noexcept
 {
 	/* overriding ChromaprintDecoderClient's implementation to
 	   make it cancellable */
@@ -305,7 +307,12 @@ GetChromaprintCommand::Read(InputStream &is, void *buffer, size_t length)
 		cond.wait(lock);
 	}
 
-	return is.Read(lock, buffer, length);
+	try {
+		return is.Read(lock, buffer, length);
+	} catch (...) {
+		ChromaprintDecoderClient::error = std::current_exception();
+		return 0;
+	}
 }
 
 CommandResult

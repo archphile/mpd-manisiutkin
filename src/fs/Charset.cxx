@@ -31,10 +31,8 @@
 #endif
 
 #include <algorithm>
-#include <stdexcept>
 
 #include <assert.h>
-#include <string.h>
 
 #ifdef HAVE_FS_CHARSET
 

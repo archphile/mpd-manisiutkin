@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,10 @@
 #include "Domain.hxx"
 #include "Control.hxx"
 #include "song/DetachedSong.hxx"
-#include "pcm/PcmConvert.hxx"
+#include "pcm/Convert.hxx"
 #include "MusicPipe.hxx"
 #include "MusicBuffer.hxx"
 #include "MusicChunk.hxx"
-#include "pcm/PcmConvert.hxx"
 #include "tag/Tag.hxx"
 #include "Log.hxx"
 #include "input/InputStream.hxx"
@@ -146,8 +145,7 @@ DecoderBridge::FlushChunk() noexcept
 		dc.pipe->Push(std::move(chunk));
 
 	const std::lock_guard<Mutex> protect(dc.mutex);
-	if (dc.client_is_waiting)
-		dc.client_cond.notify_one();
+	dc.client_cond.notify_one();
 }
 
 bool
@@ -256,7 +254,7 @@ DecoderBridge::UpdateStreamTag(InputStream *is) noexcept
 
 void
 DecoderBridge::Ready(const AudioFormat audio_format,
-		     bool seekable, SignedSongTime duration)
+		     bool seekable, SignedSongTime duration) noexcept
 {
 	assert(convert == nullptr);
 	assert(stream_tag == nullptr);
@@ -402,7 +400,7 @@ DecoderBridge::OpenUri(const char *uri)
 }
 
 size_t
-DecoderBridge::Read(InputStream &is, void *buffer, size_t length)
+DecoderBridge::Read(InputStream &is, void *buffer, size_t length) noexcept
 try {
 	assert(buffer != nullptr);
 	assert(dc.state == DecoderState::START ||

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,6 @@
  */
 
 #include "PulseOutputPlugin.hxx"
-#include "lib/pulse/Domain.hxx"
 #include "lib/pulse/Error.hxx"
 #include "lib/pulse/LogError.hxx"
 #include "lib/pulse/LockGuard.hxx"
@@ -26,7 +25,6 @@
 #include "mixer/MixerList.hxx"
 #include "mixer/plugins/PulseMixerPlugin.hxx"
 #include "util/ScopeExit.hxx"
-#include "Log.hxx"
 
 #include <pulse/thread-mainloop.h>
 #include <pulse/context.h>
@@ -47,6 +45,7 @@ class PulseOutput final : AudioOutput {
 	const char *name;
 	const char *server;
 	const char *sink;
+	const char *const media_role;
 
 	PulseMixer *mixer = nullptr;
 
@@ -109,7 +108,7 @@ private:
 	/**
 	 * Attempt to connect asynchronously to the PulseAudio server.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void Connect();
 
@@ -118,7 +117,7 @@ private:
 	 *
 	 * Caller must lock the main loop.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void SetupContext();
 
@@ -140,7 +139,7 @@ private:
 	 *
 	 * Caller must lock the main loop.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void WaitConnection();
 
@@ -149,7 +148,7 @@ private:
 	 *
 	 * Caller must lock the main loop.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void SetupStream(const pa_sample_spec &ss);
 
@@ -163,14 +162,14 @@ private:
 	 * not.  The mainloop must be locked before calling this
 	 * function.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void WaitStream();
 
 	/**
 	 * Sets cork mode on the stream.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void StreamPause(bool pause);
 };
@@ -179,7 +178,8 @@ PulseOutput::PulseOutput(const ConfigBlock &block)
 	:AudioOutput(FLAG_ENABLE_DISABLE|FLAG_PAUSE),
 	 name(block.GetBlockValue("name", "mpd_pulse")),
 	 server(block.GetBlockValue("server")),
-	 sink(block.GetBlockValue("sink"))
+	 sink(block.GetBlockValue("sink")),
+	 media_role(block.GetBlockValue("media_role"))
 {
 	setenv("PULSE_PROP_media.role", "music", true);
 	setenv("PULSE_PROP_application.icon_name", "mpd", true);
@@ -395,8 +395,16 @@ PulseOutput::SetupContext()
 {
 	assert(mainloop != nullptr);
 
-	context = pa_context_new(pa_threaded_mainloop_get_api(mainloop),
-				 MPD_PULSE_NAME);
+	pa_proplist *proplist = pa_proplist_new();
+	if (media_role)
+		pa_proplist_sets(proplist, PA_PROP_MEDIA_ROLE, media_role);
+
+	context = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop),
+					       MPD_PULSE_NAME,
+					       proplist);
+
+	pa_proplist_free(proplist);
+
 	if (context == nullptr)
 		throw std::runtime_error("pa_context_new() has failed");
 

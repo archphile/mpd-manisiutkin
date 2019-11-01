@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,8 +25,6 @@
 #include "fs/FileSystem.hxx"
 #include "fs/AllocatedPath.hxx"
 #include "Log.hxx"
-
-#include <stdexcept>
 
 #include <errno.h>
 
@@ -61,8 +59,7 @@ DirectoryExists(Storage &storage, const Directory &directory) noexcept
 		return false;
 	}
 
-	return directory.device == DEVICE_INARCHIVE ||
-		directory.device == DEVICE_CONTAINER
+	return directory.IsReallyAFile()
 		? info.IsRegular()
 		: info.IsDirectory();
 }

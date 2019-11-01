@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,5 +35,8 @@ handle_read_comments(Client &client, Request request, Response &response);
 
 CommandResult
 handle_album_art(Client &client, Request request, Response &response);
+
+CommandResult
+handle_read_picture(Client &client, Request request, Response &response);
 
 #endif

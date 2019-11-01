@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,6 @@
 #include "util/StringView.hxx"
 #include "tag/Handler.hxx"
 #include "DsdLib.hxx"
-#include "Log.hxx"
 
 struct DsdiffHeader {
 	DsdId id;
@@ -363,6 +362,7 @@ dsdiff_decode_chunk(DecoderClient &client, InputStream &is,
 		    unsigned channels, unsigned sample_rate,
 		    const offset_type total_bytes)
 {
+	const unsigned kbit_rate = channels * sample_rate / 1000;
 	const offset_type start_offset = is.GetOffset();
 
 	uint8_t buffer[8192];
@@ -409,7 +409,7 @@ dsdiff_decode_chunk(DecoderClient &client, InputStream &is,
 			bit_reverse_buffer(buffer, buffer + nbytes);
 
 		cmd = client.SubmitData(is, buffer, nbytes,
-					sample_rate / 1000);
+					kbit_rate);
 	}
 
 	return true;
@@ -488,15 +488,8 @@ static const char *const dsdiff_mime_types[] = {
 	nullptr
 };
 
-const struct DecoderPlugin dsdiff_decoder_plugin = {
-	"dsdiff",
-	dsdiff_init,
-	nullptr,
-	dsdiff_stream_decode,
-	nullptr,
-	nullptr,
-	dsdiff_scan_stream,
-	nullptr,
-	dsdiff_suffixes,
-	dsdiff_mime_types,
-};
+constexpr DecoderPlugin dsdiff_decoder_plugin =
+	DecoderPlugin("dsdiff", dsdiff_stream_decode, dsdiff_scan_stream)
+	.WithInit(dsdiff_init)
+	.WithSuffixes(dsdiff_suffixes)
+	.WithMimeTypes(dsdiff_mime_types);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@
 #include "Daemon.hxx"
 #include "system/Error.hxx"
 #include "fs/AllocatedPath.hxx"
-#include "fs/FileSystem.hxx"
 #include "util/RuntimeError.hxx"
 
 #ifndef _WIN32

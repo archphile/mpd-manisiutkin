@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@
 #include "fs/io/TextFile.hxx"
 #include "fs/io/BufferedOutputStream.hxx"
 #include "time/ChronoUtil.hxx"
+#include "util/StringAPI.hxx"
 #include "util/StringCompare.hxx"
 #include "util/NumberParser.hxx"
 #include "util/RuntimeError.hxx"
@@ -49,6 +50,9 @@ DeviceToTypeString(unsigned device) noexcept
 	case DEVICE_CONTAINER:
 		return "container";
 
+	case DEVICE_PLAYLIST:
+		return "playlist";
+
 	default:
 		return nullptr;
 	}
@@ -58,10 +62,12 @@ gcc_pure
 static unsigned
 ParseTypeString(const char *type) noexcept
 {
-	if (strcmp(type, "archive") == 0)
+	if (StringIsEqual(type, "archive"))
 		return DEVICE_INARCHIVE;
-	else if (strcmp(type, "container") == 0)
+	else if (StringIsEqual(type, "container"))
 		return DEVICE_CONTAINER;
+	else if (StringIsEqual(type, "playlist"))
+		return DEVICE_PLAYLIST;
 	else
 		return 0;
 }
@@ -160,12 +166,15 @@ directory_load(TextFile &file, Directory &directory)
 			if (directory.FindSong(name) != nullptr)
 				throw FormatRuntimeError("Duplicate song '%s'", name);
 
+			std::string target;
 			auto audio_format = AudioFormat::Undefined();
 			auto detached_song = song_load(file, name,
+						       &target,
 						       &audio_format);
 
-			auto song = Song::NewFrom(std::move(*detached_song),
-						  directory);
+			auto song = std::make_unique<Song>(std::move(detached_song),
+							   directory);
+			song->target = std::move(target);
 			song->audio_format = audio_format;
 
 			directory.AddSong(std::move(song));

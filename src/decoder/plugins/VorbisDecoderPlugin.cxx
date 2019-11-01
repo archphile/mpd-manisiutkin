@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,6 @@
 #include "input/Reader.hxx"
 #include "OggCodec.hxx"
 #include "pcm/Interleave.hxx"
-#include "util/Macros.hxx"
 #include "util/ScopeExit.hxx"
 #include "CheckAudioFormat.hxx"
 #include "tag/Handler.hxx"
@@ -41,6 +40,7 @@
 #include <tremor/ivorbiscodec.h>
 #endif /* HAVE_TREMOR */
 
+#include <iterator>
 #include <stdexcept>
 
 class VorbisDecoder final : public OggDecoder {
@@ -157,10 +157,10 @@ VorbisDecoder::OnOggBeginning(const ogg_packet &_packet)
 }
 
 static void
-vorbis_send_comments(DecoderClient &client, InputStream &is,
-		     char **comments)
+SubmitVorbisComment(DecoderClient &client, InputStream &is,
+		    const vorbis_comment &vc)
 {
-	auto tag = vorbis_comments_to_tag(comments);
+	auto tag = VorbisCommentToTag(vc);
 	if (!tag)
 		return;
 
@@ -209,7 +209,7 @@ VorbisDecoder::SubmitSomePcm()
 
 	out_sample_t buffer[4096];
 	const unsigned channels = audio_format.channels;
-	size_t max_frames = ARRAY_SIZE(buffer) / channels;
+	size_t max_frames = std::size(buffer) / channels;
 	size_t n_frames = std::min(size_t(result), max_frames);
 
 #ifdef HAVE_TREMOR
@@ -269,10 +269,10 @@ VorbisDecoder::OnOggPacket(const ogg_packet &_packet)
 		} else
 			SubmitInit();
 
-		vorbis_send_comments(client, input_stream, vc.user_comments);
+		SubmitVorbisComment(client, input_stream, vc);
 
 		ReplayGainInfo rgi;
-		if (vorbis_comments_to_replay_gain(rgi, vc.user_comments))
+		if (VorbisCommentToReplayGain(rgi, vc))
 			client.SubmitReplayGain(&rgi);
 	} else {
 		if (!dsp_initialized) {
@@ -404,7 +404,7 @@ vorbis_scan_stream(InputStream &is, TagHandler &handler) noexcept
 
 	/* visit the Vorbis comments we just read */
 
-	vorbis_comments_scan(vc.user_comments, handler);
+	VorbisCommentScan(vc, handler);
 
 	/* check the song duration by locating the e_o_s packet */
 
@@ -434,15 +434,8 @@ static const char *const vorbis_mime_types[] = {
 	nullptr
 };
 
-const struct DecoderPlugin vorbis_decoder_plugin = {
-	"vorbis",
-	vorbis_init,
-	nullptr,
-	vorbis_stream_decode,
-	nullptr,
-	nullptr,
-	vorbis_scan_stream,
-	nullptr,
-	vorbis_suffixes,
-	vorbis_mime_types
-};
+constexpr DecoderPlugin vorbis_decoder_plugin =
+	DecoderPlugin("vorbis", vorbis_stream_decode, vorbis_scan_stream)
+	.WithInit(vorbis_init)
+	.WithSuffixes(vorbis_suffixes)
+	.WithMimeTypes(vorbis_mime_types);

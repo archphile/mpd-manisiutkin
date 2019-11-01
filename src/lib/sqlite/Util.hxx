@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #ifndef MPD_SQLITE_UTIL_HXX
 #define MPD_SQLITE_UTIL_HXX
 
+#include "util/Compiler.h"
 #include "Error.hxx"
 
 #include <sqlite3.h>

@@ -34,6 +34,7 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 
 /**
  * Throws the specified exception.  There is an overload for
@@ -45,7 +46,7 @@ gcc_noreturn
 inline void
 ThrowException(T &&t)
 {
-	throw t;
+	throw std::forward<T>(t);
 }
 
 gcc_noreturn

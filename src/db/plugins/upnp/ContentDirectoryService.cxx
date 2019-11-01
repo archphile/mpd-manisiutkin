@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,9 @@
 #include "lib/upnp/Action.hxx"
 #include "Directory.hxx"
 #include "util/NumberParser.hxx"
-#include "util/UriUtil.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/StringFormat.hxx"
-
-#include <stdio.h>
 
 static void
 ReadResultTag(UPnPDirContent &dirbuf, IXML_Document *response)

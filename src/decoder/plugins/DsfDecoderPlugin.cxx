@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,6 @@
 #include "util/ByteOrder.hxx"
 #include "DsdLib.hxx"
 #include "tag/Handler.hxx"
-#include "Log.hxx"
 
 #include <string.h>
 
@@ -256,6 +255,7 @@ dsf_decode_chunk(DecoderClient &client, InputStream &is,
 		 offset_type n_blocks,
 		 bool bitreverse)
 {
+	const unsigned kbit_rate = channels * sample_rate / 1000;
 	const size_t block_size = channels * DSF_BLOCK_SIZE;
 	const offset_type start_offset = is.GetOffset();
 
@@ -291,7 +291,7 @@ dsf_decode_chunk(DecoderClient &client, InputStream &is,
 
 		cmd = client.SubmitData(is,
 					interleaved_buffer, block_size,
-					sample_rate / 1000);
+					kbit_rate);
 		++i;
 	}
 
@@ -361,15 +361,7 @@ static const char *const dsf_mime_types[] = {
 	nullptr
 };
 
-const struct DecoderPlugin dsf_decoder_plugin = {
-	"dsf",
-	nullptr,
-	nullptr,
-	dsf_stream_decode,
-	nullptr,
-	nullptr,
-	dsf_scan_stream,
-	nullptr,
-	dsf_suffixes,
-	dsf_mime_types,
-};
+constexpr DecoderPlugin dsf_decoder_plugin =
+	DecoderPlugin("dsf", dsf_stream_decode, dsf_scan_stream)
+	.WithSuffixes(dsf_suffixes)
+	.WithMimeTypes(dsf_mime_types);

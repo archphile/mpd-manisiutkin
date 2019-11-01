@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
 void
 DumpDecoderClient::Ready(const AudioFormat audio_format,
 			 gcc_unused bool seekable,
-			 SignedSongTime duration)
+			 SignedSongTime duration) noexcept
 {
 	assert(!initialized);
 	assert(audio_format.IsValid());
@@ -76,7 +76,7 @@ DumpDecoderClient::OpenUri(const char *uri)
 }
 
 size_t
-DumpDecoderClient::Read(InputStream &is, void *buffer, size_t length)
+DumpDecoderClient::Read(InputStream &is, void *buffer, size_t length) noexcept
 {
 	try {
 		return is.LockRead(buffer, length);

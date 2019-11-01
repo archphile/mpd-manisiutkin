@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@
 #include "NeighborPlugin.hxx"
 #include "Info.hxx"
 #include "config/Data.hxx"
-#include "config/Domain.hxx"
 #include "config/Block.hxx"
 #include "util/RuntimeError.hxx"
 

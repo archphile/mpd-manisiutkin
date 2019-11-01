@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -172,15 +172,7 @@ static const char *const pls_mime_types[] = {
 	nullptr
 };
 
-const struct playlist_plugin pls_playlist_plugin = {
-	"pls",
-
-	nullptr,
-	nullptr,
-	nullptr,
-	pls_open_stream,
-
-	nullptr,
-	pls_suffixes,
-	pls_mime_types,
-};
+const PlaylistPlugin pls_playlist_plugin =
+	PlaylistPlugin("pls", pls_open_stream)
+	.WithSuffixes(pls_suffixes)
+	.WithMimeTypes(pls_mime_types);

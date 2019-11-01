@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@
 #include "encoder/ToOutputStream.hxx"
 #include "encoder/EncoderInterface.hxx"
 #include "encoder/Configured.hxx"
-#include "config/Domain.hxx"
 #include "config/Path.hxx"
 #include "Log.hxx"
 #include "fs/AllocatedPath.hxx"
@@ -97,7 +96,7 @@ private:
 	/**
 	 * Finish the encoder and commit the file.
 	 *
-	 * Throws #std::runtime_error on error.
+	 * Throws on error.
 	 */
 	void Commit();
 

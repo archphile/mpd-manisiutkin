@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,6 @@
 #define MPD_INOTIFY_SOURCE_HXX
 
 #include "event/SocketMonitor.hxx"
-#include "util/Compiler.h"
-
-class FileDescriptor;
 
 typedef void (*mpd_inotify_callback_t)(int wd, unsigned mask,
 				       const char *name, void *ctx);
@@ -45,7 +42,7 @@ public:
 	InotifySource(EventLoop &_loop,
 		      mpd_inotify_callback_t callback, void *ctx);
 
-	~InotifySource() {
+	~InotifySource() noexcept {
 		Close();
 	}
 
@@ -63,7 +60,7 @@ public:
 	 *
 	 * @param wd the watch descriptor returned by mpd_inotify_source_add()
 	 */
-	void Remove(unsigned wd);
+	void Remove(unsigned wd) noexcept;
 
 private:
 	bool OnSocketReady(unsigned flags) noexcept override;

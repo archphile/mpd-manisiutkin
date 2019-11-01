@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,13 +22,11 @@
 #include "tag/Handler.hxx"
 #include "tag/Builder.hxx"
 #include "util/MimeType.hxx"
-#include "util/UriUtil.hxx"
 #include "decoder/DecoderList.hxx"
 #include "decoder/DecoderPlugin.hxx"
 #include "input/InputStream.hxx"
 #include "thread/Mutex.hxx"
-
-#include <exception>
+#include "util/UriExtract.hxx"
 
 #include <assert.h>
 

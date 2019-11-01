@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,28 +21,32 @@
 #include "VorbisComment.hxx"
 #include "MixRampInfo.hxx"
 #include "util/ASCII.hxx"
+#include "util/StringView.hxx"
 
 #include <assert.h>
 
 template<typename T>
 static bool
-ParseMixRampTagTemplate(MixRampInfo &info, const T t)
+ParseMixRampTagTemplate(MixRampInfo &info, const T t) noexcept
 {
-	const char *value;
-
-	if ((value = t["mixramp_start"]) != nullptr) {
-		info.SetStart(value);
+	const auto start = t["mixramp_start"];
+	if (!start.IsNull()) {
+		info.SetStart(std::string(start.data, start.size));
 		return true;
-	} else if ((value = t["mixramp_end"]) != nullptr) {
-		info.SetEnd(value);
-		return true;
-	} else
-		return false;
+	}
 
+	const auto end = t["mixramp_end"];
+	if (!start.IsNull()) {
+		info.SetEnd(std::string(end.data, end.size));
+		return true;
+	}
+
+	return false;
 }
 
 bool
-ParseMixRampTag(MixRampInfo &info, const char *name, const char *value)
+ParseMixRampTag(MixRampInfo &info,
+		const char *name, const char *value) noexcept
 {
 	assert(name != nullptr);
 	assert(value != nullptr);
@@ -52,7 +56,7 @@ ParseMixRampTag(MixRampInfo &info, const char *name, const char *value)
 		const char *value;
 
 		gcc_pure
-		const char *operator[](const char *n) const noexcept {
+		StringView operator[](const char *n) const noexcept {
 			return StringEqualsCaseASCII(name, n)
 				? value
 				: nullptr;
@@ -63,14 +67,14 @@ ParseMixRampTag(MixRampInfo &info, const char *name, const char *value)
 }
 
 bool
-ParseMixRampVorbis(MixRampInfo &info, const char *entry)
+ParseMixRampVorbis(MixRampInfo &info, StringView entry) noexcept
 {
 	struct VorbisCommentEntry {
-		const char *entry;
+		StringView entry;
 
 		gcc_pure
-		const char *operator[](const char *n) const noexcept {
-			return vorbis_comment_value(entry, n);
+		StringView operator[](StringView n) const noexcept {
+			return GetVorbisCommentValue(entry, n);
 		}
 	};
 

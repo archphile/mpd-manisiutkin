@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,6 @@
 #include "ShineEncoderPlugin.hxx"
 #include "../EncoderAPI.hxx"
 #include "AudioFormat.hxx"
-#include "config/Domain.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "util/RuntimeError.hxx"
 
@@ -48,14 +47,14 @@ class ShineEncoder final : public Encoder {
 	DynamicFifoBuffer<uint8_t> output_buffer;
 
 public:
-	ShineEncoder(AudioFormat _audio_format, shine_t _shine)
+	ShineEncoder(AudioFormat _audio_format, shine_t _shine) noexcept
 		:Encoder(false),
 		 audio_format(_audio_format), shine(_shine),
 		 frame_size(shine_samples_per_pass(shine)),
 		 stereo{new int16_t[frame_size], new int16_t[frame_size]},
 		 output_buffer(BUFFER_INIT_SIZE) {}
 
-	~ShineEncoder() override {
+	~ShineEncoder() noexcept override {
 		if (input_pos > SHINE_MAX_SAMPLES) {
 			/* write zero chunk */
 			input_pos = 0;
@@ -78,7 +77,7 @@ public:
 
 	void Write(const void *data, size_t length) override;
 
-	size_t Read(void *dest, size_t length) override {
+	size_t Read(void *dest, size_t length) noexcept override {
 		return output_buffer.Read((uint8_t *)dest, length);
 	}
 };
@@ -92,7 +91,7 @@ public:
 	/* virtual methods from class PreparedEncoder */
 	Encoder *Open(AudioFormat &audio_format) override;
 
-	const char *GetMimeType() const override {
+	const char *GetMimeType() const noexcept override {
 		return  "audio/mpeg";
 	}
 };

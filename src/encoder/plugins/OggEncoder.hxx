@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -50,7 +50,7 @@ public:
 		flush = true;
 	}
 
-	size_t Read(void *dest, size_t length) override {
+	size_t Read(void *dest, size_t length) noexcept override {
 		ogg_page page;
 		bool success = stream.PageOut(page);
 		if (!success) {

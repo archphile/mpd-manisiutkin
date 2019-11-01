@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,7 @@ class DumpTagHandler final : public NullTagHandler {
 
 public:
 	DumpTagHandler() noexcept
-		:NullTagHandler(WANT_DURATION|WANT_TAG|WANT_PAIR) {}
+		:NullTagHandler(WANT_DURATION|WANT_TAG|WANT_PAIR|WANT_PICTURE) {}
 
 	bool IsEmpty() const noexcept {
 		return empty;
@@ -73,6 +73,11 @@ public:
 
 	void OnAudioFormat(AudioFormat af) noexcept override {
 		printf("%s\n", ToString(af).c_str());
+	}
+
+	void OnPicture(const char *mime_type,
+		       ConstBuffer<void> buffer) noexcept override {
+		printf("picture mime='%s' size=%zu\n", mime_type, buffer.size);
 	}
 };
 

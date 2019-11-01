@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ public:
 	/**
 	 * Opens the filter, preparing it for FilterPCM().
 	 *
-	 * Throws std::runtime_error on error.
+	 * Throws on error.
 	 *
 	 * @param af the audio format of incoming data; the
 	 * plugin may modify the object to enforce another input

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,12 +22,10 @@
 #include "Editor.hxx"
 #include "UpdateDomain.hxx"
 #include "db/DatabaseLock.hxx"
-#include "db/PlaylistVector.hxx"
 #include "db/Uri.hxx"
 #include "db/plugins/simple/Directory.hxx"
 #include "db/plugins/simple/Song.hxx"
 #include "storage/StorageInterface.hxx"
-#include "playlist/PlaylistRegistry.hxx"
 #include "ExcludeList.hxx"
 #include "fs/AllocatedPath.hxx"
 #include "fs/Traits.hxx"
@@ -37,10 +35,10 @@
 #include "input/Error.hxx"
 #include "util/Alloc.hxx"
 #include "util/StringCompare.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriExtract.hxx"
 #include "Log.hxx"
 
-#include <stdexcept>
+#include <exception>
 #include <memory>
 
 #include <assert.h>
@@ -81,9 +79,9 @@ UpdateWalk::RemoveExcludedFromDirectory(Directory &directory,
 		});
 
 	directory.ForEachSongSafe([&](Song &song){
-			assert(song.parent == &directory);
+			assert(&song.parent == &directory);
 
-			const auto name_fs = AllocatedPath::FromUTF8(song.uri);
+			const auto name_fs = AllocatedPath::FromUTF8(song.filename.c_str());
 			if (name_fs.IsNull() || exclude_list.Check(name_fs)) {
 				editor.DeleteSong(directory, &song);
 				modified = true;
@@ -105,7 +103,7 @@ UpdateWalk::PurgeDeletedFromDirectory(Directory &directory) noexcept
 
 	directory.ForEachSongSafe([&](Song &song){
 			if (!directory_child_is_regular(storage, directory,
-							song.uri)) {
+							song.filename.c_str())) {
 				editor.LockDeleteSong(directory, &song);
 
 				modified = true;
@@ -173,22 +171,6 @@ FindAncestorLoop(Storage &storage, Directory *parent,
 #endif
 
 	return 0;
-}
-
-inline bool
-UpdateWalk::UpdatePlaylistFile(Directory &directory,
-			       const char *name, const char *suffix,
-			       const StorageFileInfo &info) noexcept
-{
-	if (!playlist_suffix_supported(suffix))
-		return false;
-
-	PlaylistInfo pi(name, info.mtime);
-
-	const ScopeDatabaseLock protect;
-	if (directory.playlists.UpdateOrInsert(std::move(pi)))
-		modified = true;
-	return true;
 }
 
 inline bool
@@ -492,6 +474,12 @@ UpdateWalk::Walk(Directory &root, const char *path, bool discard) noexcept
 		StorageFileInfo info;
 		if (!GetInfo(storage, "", info))
 			return false;
+
+		if (!info.IsDirectory()) {
+			FormatError(update_domain, "Not a directory: %s",
+				    storage.MapUTF8("").c_str());
+			return false;
+		}
 
 		ExcludeList exclude_list;
 

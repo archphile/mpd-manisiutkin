@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,10 @@ struct ReplayGainTuple {
 		return gain > -100;
 	}
 
+	static constexpr ReplayGainTuple Undefined() noexcept {
+		return {-200.0f, 0.0f};
+	}
+
 	gcc_pure
 	float CalculateScale(const ReplayGainConfig &config) const noexcept;
 };
@@ -47,6 +51,13 @@ struct ReplayGainInfo {
 
 	constexpr bool IsDefined() const noexcept {
 		return track.IsDefined() || album.IsDefined();
+	}
+
+	static constexpr ReplayGainInfo Undefined() noexcept {
+		return {
+			ReplayGainTuple::Undefined(),
+			ReplayGainTuple::Undefined(),
+		};
 	}
 
 	const ReplayGainTuple &Get(ReplayGainMode mode) const noexcept {

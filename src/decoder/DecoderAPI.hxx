@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,6 @@
 // IWYU pragma: end_exports
 
 #include <stdint.h>
-
-class DecoderClient;
 
 /**
  * Throw an instance of this class to stop decoding the current song

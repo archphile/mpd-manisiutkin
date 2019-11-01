@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,18 +38,6 @@ DecoderControl::DecoderControl(Mutex &_mutex, Cond &_client_cond,
 DecoderControl::~DecoderControl() noexcept
 {
 	ClearError();
-}
-
-void
-DecoderControl::WaitForDecoder(std::unique_lock<Mutex> &lock) noexcept
-{
-	assert(!client_is_waiting);
-	client_is_waiting = true;
-
-	client_cond.wait(lock);
-
-	assert(client_is_waiting);
-	client_is_waiting = false;
 }
 
 void
@@ -149,6 +137,18 @@ DecoderControl::Seek(std::unique_lock<Mutex> &lock, SongTime t)
 	seek_time = t;
 	seek_error = false;
 	SynchronousCommandLocked(lock, DecoderCommand::SEEK);
+
+	while (state == DecoderState::START)
+		/* If the decoder falls back to DecoderState::START,
+		   this means that our SEEK command arrived too late,
+		   and the decoder had meanwhile finished decoding and
+		   went idle.  Our SEEK command is finished, but that
+		   means only that the decoder thread has launched the
+		   decoder.  To work around illegal states, we wait
+		   until the decoder plugin has become ready.  This is
+		   a kludge, built on top of the "late seek" kludge.
+		   Not exactly elegant, sorry. */
+		WaitForDecoder(lock);
 
 	if (seek_error)
 		throw std::runtime_error("Decoder failed to seek");

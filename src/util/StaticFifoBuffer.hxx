@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2017 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2003-2019 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,21 +46,19 @@
 template<class T, size_t size>
 class StaticFifoBuffer {
 public:
-	typedef size_t size_type;
-
-public:
-	typedef WritableBuffer<T> Range;
+	using size_type = size_t;
+	using Range = WritableBuffer<T>;
 
 protected:
 	size_type head = 0, tail = 0;
 	T data[size];
 
 public:
-	constexpr size_type GetCapacity() const {
+	constexpr size_type GetCapacity() const noexcept {
 		return size;
 	}
 
-	void Shift() {
+	void Shift() noexcept {
 		if (head == 0)
 			return;
 
@@ -74,15 +72,15 @@ public:
 		head = 0;
 	}
 
-	void Clear() {
+	void Clear() noexcept {
 		head = tail = 0;
 	}
 
-	bool empty() const {
+	constexpr bool empty() const noexcept {
 		return head == tail;
 	}
 
-	bool IsFull() const {
+	constexpr bool IsFull() const noexcept {
 		return head == 0 && tail == size;
 	}
 
@@ -90,7 +88,7 @@ public:
 	 * Prepares writing.  Returns a buffer range which may be written.
 	 * When you are finished, call Append().
 	 */
-	Range Write() {
+	Range Write() noexcept {
 		if (empty())
 			Clear();
 		else if (tail == size)
@@ -103,7 +101,7 @@ public:
 	 * Expands the tail of the buffer, after data has been written to
 	 * the buffer returned by Write().
 	 */
-	void Append(size_type n) {
+	void Append(size_type n) noexcept {
 		assert(tail <= size);
 		assert(n <= size);
 		assert(tail + n <= size);
@@ -111,18 +109,22 @@ public:
 		tail += n;
 	}
 
+	constexpr size_type GetAvailable() const noexcept {
+		return tail - head;
+	}
+
 	/**
 	 * Return a buffer range which may be read.  The buffer pointer is
 	 * writable, to allow modifications while parsing.
 	 */
-	Range Read() {
+	constexpr Range Read() noexcept {
 		return Range(data + head, tail - head);
 	}
 
 	/**
 	 * Marks a chunk as consumed.
 	 */
-	void Consume(size_type n) {
+	void Consume(size_type n) noexcept {
 		assert(tail <= size);
 		assert(head <= tail);
 		assert(n <= tail);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,26 @@ queue_save(BufferedOutputStream &os, const Queue &queue)
 	}
 }
 
+static DetachedSong
+LoadQueueSong(TextFile &file, const char *line)
+{
+	std::unique_ptr<DetachedSong> song;
+
+	if (const char *p = StringAfterPrefix(line, SONG_BEGIN)) {
+		const char *uri = p;
+		return song_load(file, uri);
+	} else {
+		char *endptr;
+		long ret = strtol(line, &endptr, 10);
+		if (ret < 0 || *endptr != ':' || endptr[1] == 0)
+			throw std::runtime_error("Malformed playlist line in state file");
+
+		const char *uri = endptr + 1;
+
+		return DetachedSong(uri);
+	}
+}
+
 void
 queue_load_song(TextFile &file, const SongLoader &loader,
 		const char *line, Queue &queue)
@@ -90,33 +110,10 @@ queue_load_song(TextFile &file, const SongLoader &loader,
 			return;
 	}
 
-	std::unique_ptr<DetachedSong> song;
+	auto song = LoadQueueSong(file, line);
 
-	if ((p = StringAfterPrefix(line, SONG_BEGIN))) {
-		const char *uri = p;
-
-		try {
-			song = song_load(file, uri);
-		} catch (...) {
-			LogError(std::current_exception());
-			return;
-		}
-	} else {
-		char *endptr;
-		long ret = strtol(line, &endptr, 10);
-		if (ret < 0 || *endptr != ':' || endptr[1] == 0) {
-			LogError(playlist_domain,
-				 "Malformed playlist line in state file");
-			return;
-		}
-
-		const char *uri = endptr + 1;
-
-		song = std::make_unique<DetachedSong>(uri);
-	}
-
-	if (!playlist_check_translate_song(*song, nullptr, loader))
+	if (!playlist_check_translate_song(song, nullptr, loader))
 		return;
 
-	queue.Append(std::move(*song), priority);
+	queue.Append(std::move(song), priority);
 }

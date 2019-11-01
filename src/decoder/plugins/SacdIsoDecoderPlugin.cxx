@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2018 The Music Player Daemon Project
+ * Copyright (C) 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@
 #include "util/StringView.hxx"
 #include "util/FormatString.hxx"
 #include "util/AllocatedString.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriExtract.hxx"
 #include "util/Domain.hxx"
 #include "Log.hxx"
 
@@ -221,7 +221,7 @@ sacdiso_finish() noexcept {
 static std::forward_list<DetachedSong>
 sacdiso_container_scan(Path path_fs) {
 	std::forward_list<DetachedSong> list;
-	if (!sacdiso_update_toc(path_fs.c_str())) {
+	if (path_fs.IsNull() || !sacdiso_update_toc(path_fs.c_str())) {
 		return list;
 	}
 	TagBuilder tag_builder;
@@ -343,7 +343,7 @@ sacdiso_file_decode(DecoderClient &client, Path path_fs) {
 					if (param_lsbitfirst) {
 						bit_reverse_buffer(dsd_data, dsd_data + dsd_size);
 					}
-					cmd = client.SubmitData(nullptr, dsd_data, dsd_size, dsd_samplerate / 1000);
+					cmd = client.SubmitData(nullptr, dsd_data, dsd_size, 8 * dst_size / 1000);
 				}
 			}
 		}
@@ -360,7 +360,7 @@ sacdiso_file_decode(DecoderClient &client, Path path_fs) {
 					if (param_lsbitfirst) {
 						bit_reverse_buffer(dsd_data, dsd_data + dsd_size);
 					}
-					cmd = client.SubmitData(nullptr, dsd_data, dsd_size, dsd_samplerate / 1000);
+					cmd = client.SubmitData(nullptr, dsd_data, dsd_size, 0);
 					if (cmd == DecoderCommand::STOP || cmd == DecoderCommand::SEEK) {
 						break;
 					}
@@ -434,16 +434,9 @@ static const char* const sacdiso_mime_types[] = {
 	nullptr
 };
 
-extern const struct DecoderPlugin sacdiso_decoder_plugin;
-const struct DecoderPlugin sacdiso_decoder_plugin = {
-	"sacdiso",
-	sacdiso_init,
-	sacdiso_finish,
-	nullptr,
-	sacdiso_file_decode,
-	sacdiso_scan_file,
-	nullptr,
-	sacdiso_container_scan,
-	sacdiso_suffixes,
-	sacdiso_mime_types,
-};
+constexpr DecoderPlugin sacdiso_decoder_plugin =
+DecoderPlugin("sacdiso", sacdiso_file_decode, sacdiso_scan_file)
+.WithInit(sacdiso_init, sacdiso_finish)
+.WithContainer(sacdiso_container_scan)
+.WithSuffixes(sacdiso_suffixes)
+.WithMimeTypes(sacdiso_mime_types);

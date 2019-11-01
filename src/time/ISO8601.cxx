@@ -32,8 +32,11 @@
 
 #include "ISO8601.hxx"
 #include "Convert.hxx"
-#include "Parser.hxx"
 #include "util/StringBuffer.hxx"
+
+#include <stdexcept>
+
+#include <assert.h>
 
 StringBuffer<64>
 FormatISO8601(const struct tm &tm) noexcept
@@ -55,8 +58,105 @@ FormatISO8601(std::chrono::system_clock::time_point tp)
 	return FormatISO8601(GmTime(tp));
 }
 
-std::chrono::system_clock::time_point
+static std::pair<unsigned, unsigned>
+ParseTimeZoneOffsetRaw(const char *&s)
+{
+	char *endptr;
+	unsigned long value = strtoul(s, &endptr, 10);
+	if (endptr == s + 4) {
+		s = endptr;
+		return std::make_pair(value / 100, value % 100);
+	} else if (endptr == s + 2) {
+		s = endptr;
+
+		unsigned hours = value, minutes = 0;
+		if (*s == ':') {
+			++s;
+			minutes = strtoul(s, &endptr, 10);
+			if (endptr != s + 2)
+				throw std::runtime_error("Failed to parse time zone offset");
+
+			s = endptr;
+		}
+
+		return std::make_pair(hours, minutes);
+	} else
+		throw std::runtime_error("Failed to parse time zone offset");
+}
+
+static std::chrono::system_clock::duration
+ParseTimeZoneOffset(const char *&s)
+{
+	assert(*s == '+' || *s == '-');
+
+	bool negative = *s == '-';
+	++s;
+
+	auto raw = ParseTimeZoneOffsetRaw(s);
+	if (raw.first > 13)
+		throw std::runtime_error("Time offset hours out of range");
+
+	if (raw.second >= 60)
+		throw std::runtime_error("Time offset minutes out of range");
+
+	std::chrono::system_clock::duration d = std::chrono::hours(raw.first);
+	d += std::chrono::minutes(raw.second);
+
+	if (negative)
+		d = -d;
+
+	return d;
+}
+
+std::pair<std::chrono::system_clock::time_point,
+	  std::chrono::system_clock::duration>
 ParseISO8601(const char *s)
 {
-	return ParseTimePoint(s, "%FT%TZ");
+	assert(s != nullptr);
+
+#ifdef _WIN32
+	/* TODO: emulate strptime()? */
+	(void)s;
+	throw std::runtime_error("Time parsing not implemented on Windows");
+#else
+	struct tm tm{};
+
+	/* parse the date */
+	const char *end = strptime(s, "%F", &tm);
+	if (end == nullptr)
+		throw std::runtime_error("Failed to parse date");
+
+	s = end;
+
+	std::chrono::system_clock::duration precision = std::chrono::hours(24);
+
+	/* parse the time of day */
+	if (*s == 'T') {
+		++s;
+
+		if ((end = strptime(s, "%T", &tm)) != nullptr)
+			precision = std::chrono::seconds(1);
+		else if ((end = strptime(s, "%H:%M", &tm)) != nullptr)
+			precision = std::chrono::minutes(1);
+		else if ((end = strptime(s, "%H", &tm)) != nullptr)
+			precision = std::chrono::hours(1);
+		else
+			throw std::runtime_error("Failed to parse time of day");
+
+		s = end;
+	}
+
+	auto tp = TimeGm(tm);
+
+	/* time zone */
+	if (*s == 'Z')
+		++s;
+	else if (*s == '+' || *s == '-')
+		tp -= ParseTimeZoneOffset(s);
+
+	if (*s != 0)
+		throw std::runtime_error("Garbage at end of time stamp");
+
+	return std::make_pair(tp, precision);
+#endif /* !_WIN32 */
 }

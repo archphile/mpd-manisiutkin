@@ -20,14 +20,14 @@
 #include "config.h"
 #include "Instance.hxx"
 #include "Partition.hxx"
-#include "Idle.hxx"
+#include "IdleFlags.hxx"
 #include "Stats.hxx"
 #include "client/List.hxx"
 #include "input/cache/Manager.hxx"
 
 #ifdef ENABLE_CURL
 #include "RemoteTagCache.hxx"
-#include "util/UriUtil.hxx"
+#include "util/UriExtract.hxx"
 #endif
 
 #ifdef ENABLE_DATABASE
@@ -45,8 +45,6 @@
 #include "sticker/SongSticker.hxx"
 #endif
 #endif
-
-#include <exception>
 
 Instance::Instance()
 	:rtio_thread(true),

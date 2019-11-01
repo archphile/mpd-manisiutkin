@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+template<typename T> struct ConstBuffer;
 class Client;
 class TagMask;
 
@@ -75,6 +76,16 @@ public:
 	bool Write(const char *data) noexcept;
 	bool FormatV(const char *fmt, va_list args) noexcept;
 	bool Format(const char *fmt, ...) noexcept;
+
+	static constexpr size_t MAX_BINARY_SIZE = 8192;
+
+	/**
+	 * Write a binary chunk; this writes the "binary" line, the
+	 * given chunk and the trailing newline.
+	 *
+	 * @return true on success
+	 */
+	bool WriteBinary(ConstBuffer<void> payload) noexcept;
 
 	void Error(enum ack code, const char *msg) noexcept;
 	void FormatError(enum ack code, const char *fmt, ...) noexcept;

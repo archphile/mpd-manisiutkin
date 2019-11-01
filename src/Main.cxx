@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The Music Player Daemon Project
+ * Copyright 2003-2019 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 #include "Partition.hxx"
 #include "tag/Config.hxx"
 #include "ReplayGainGlobal.hxx"
-#include "Idle.hxx"
+#include "IdleFlags.hxx"
 #include "Log.hxx"
 #include "LogInit.hxx"
 #include "input/Init.hxx"
@@ -47,12 +47,11 @@
 #include "zeroconf/ZeroconfGlue.hxx"
 #include "decoder/DecoderList.hxx"
 #include "AudioParser.hxx"
-#include "pcm/PcmConvert.hxx"
+#include "pcm/Convert.hxx"
 #include "unix/SignalHandlers.hxx"
 #include "thread/Slack.hxx"
 #include "net/Init.hxx"
 #include "lib/icu/Init.hxx"
-#include "config/File.hxx"
 #include "config/Check.hxx"
 #include "config/Data.hxx"
 #include "config/Param.hxx"
@@ -98,6 +97,7 @@
 #include "android/Environment.hxx"
 #include "android/Context.hxx"
 #include "android/LogListener.hxx"
+#include "config/File.hxx"
 #include "fs/FileSystem.hxx"
 #include "org_musicpd_Bridge.h"
 #endif
