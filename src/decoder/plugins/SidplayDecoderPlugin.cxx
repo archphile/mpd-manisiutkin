@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -127,7 +127,7 @@ SidplayGlobal::SidplayGlobal(const ConfigBlock &block)
 	if (!database_path.IsNull())
 		songlength_database = sidplay_load_songlength_db(database_path);
 
-	default_songlength = block.GetPositiveValue("default_songlength", 0u);
+	default_songlength = block.GetPositiveValue("default_songlength", 0U);
 
 	default_genre = block.GetBlockValue("default_genre", "");
 
@@ -403,7 +403,7 @@ sidplay_file_decode(DecoderClient &client, Path path_fs)
 	const unsigned timebase = player.timebase();
 #endif
 	const unsigned end = duration.IsNegative()
-		? 0u
+		? 0U
 		: duration.ToScale<uint64_t>(timebase);
 
 	DecoderCommand cmd;
@@ -456,10 +456,7 @@ Windows1252ToUTF8(const char *s) noexcept
 {
 #ifdef HAVE_ICU_CONVERTER
 	try {
-		std::unique_ptr<IcuConverter>
-			converter(IcuConverter::Create("windows-1252"));
-
-		return converter->ToUTF8(s);
+		return IcuConverter::Create("windows-1252")->ToUTF8(s);
 	} catch (...) { }
 #endif
 

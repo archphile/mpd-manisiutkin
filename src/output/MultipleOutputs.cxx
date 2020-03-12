@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,7 @@
  */
 
 #include "MultipleOutputs.hxx"
+#include "Client.hxx"
 #include "Filtered.hxx"
 #include "Defaults.hxx"
 #include "MusicPipe.hxx"
@@ -34,8 +35,9 @@
 #include <assert.h>
 #include <string.h>
 
-MultipleOutputs::MultipleOutputs(MixerListener &_mixer_listener) noexcept
-	:mixer_listener(_mixer_listener)
+MultipleOutputs::MultipleOutputs(AudioOutputClient &_client,
+				 MixerListener &_mixer_listener) noexcept
+	:client(_client), mixer_listener(_mixer_listener)
 {
 }
 
@@ -85,8 +87,7 @@ LoadOutputControl(EventLoop &event_loop,
 void
 MultipleOutputs::Configure(EventLoop &event_loop,
 			   const ConfigData &config,
-			   const ReplayGainConfig &replay_gain_config,
-			   AudioOutputClient &client)
+			   const ReplayGainConfig &replay_gain_config)
 {
 	const AudioOutputDefaults defaults(config);
 	FilterFactory filter_factory(config);
@@ -116,22 +117,6 @@ MultipleOutputs::Configure(EventLoop &event_loop,
 	}
 }
 
-void
-MultipleOutputs::AddNullOutput(EventLoop &event_loop,
-			       const ReplayGainConfig &replay_gain_config,
-			       AudioOutputClient &client)
-{
-	const AudioOutputDefaults defaults;
-
-	ConfigBlock block;
-	block.AddBlockParam("type", "null");
-
-	outputs.emplace_back(LoadOutputControl(event_loop, replay_gain_config,
-					       mixer_listener,
-					       client, block, defaults,
-					       nullptr));
-}
-
 AudioOutputControl *
 MultipleOutputs::FindByName(const char *name) noexcept
 {
@@ -140,6 +125,19 @@ MultipleOutputs::FindByName(const char *name) noexcept
 			return i.get();
 
 	return nullptr;
+}
+
+void
+MultipleOutputs::Add(std::unique_ptr<FilteredAudioOutput> output,
+		     bool enable) noexcept
+{
+	// TODO: this operation needs to be protected with a mutex
+	outputs.emplace_back(std::make_unique<AudioOutputControl>(std::move(output),
+								  client));
+
+	outputs.back()->LockSetEnabled(enable);
+
+	client.ApplyEnabled();
 }
 
 void

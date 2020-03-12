@@ -30,7 +30,6 @@
 #include "config.h"
 #include "Request.hxx"
 #include "Global.hxx"
-#include "Version.hxx"
 #include "Handler.hxx"
 #include "event/Call.hxx"
 #include "util/RuntimeError.hxx"
@@ -57,7 +56,7 @@ CurlRequest::CurlRequest(CurlGlobal &_global,
 	easy.SetUserAgent("Music Player Daemon " VERSION);
 	easy.SetHeaderFunction(_HeaderFunction, this);
 	easy.SetWriteFunction(WriteFunction, this);
-	easy.SetOption(CURLOPT_NETRC, 1l);
+	easy.SetOption(CURLOPT_NETRC, 1L);
 	easy.SetErrorBuffer(error_buffer);
 	easy.SetNoProgress();
 	easy.SetNoSignal();
@@ -121,12 +120,6 @@ CurlRequest::Resume() noexcept
 	assert(registered);
 
 	easy.Unpause();
-
-	if (IsCurlOlderThan(0x072000))
-		/* libcurl older than 7.32.0 does not update
-		   its sockets after curl_easy_pause(); force
-		   libcurl to do it now */
-		global.ResumeSockets();
 
 	global.InvalidateSockets();
 }

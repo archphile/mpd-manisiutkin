@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #include "encoder/EncoderPlugin.hxx"
 #include "encoder/EncoderInterface.hxx"
 #include "encoder/ToOutputStream.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "config/Block.hxx"
 #include "fs/io/StdioOutputStream.hxx"
 #include "tag/Tag.hxx"
@@ -41,7 +41,7 @@ try {
 	/* create the encoder */
 
 	const auto plugin = encoder_plugin_get("vorbis");
-	assert(plugin != NULL);
+	assert(plugin != nullptr);
 
 	ConfigBlock block;
 	block.AddBlockParam("quality", "5.0", -1);

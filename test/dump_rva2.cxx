@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -70,7 +70,7 @@ try {
 	auto is = OpenLocalInputStream(path, mutex);
 
 	const auto tag = tag_id3_load(*is);
-	if (tag == NULL) {
+	if (tag == nullptr) {
 		fprintf(stderr, "No ID3 tag found\n");
 		return EXIT_FAILURE;
 	}

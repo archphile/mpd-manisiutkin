@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@ FormatStringV(const char *fmt, va_list args) noexcept
 {
 	va_list tmp;
 	va_copy(tmp, args);
-	const int length = vsnprintf(NULL, 0, fmt, tmp);
+	const int length = vsnprintf(nullptr, 0, fmt, tmp);
 	va_end(tmp);
 
 	if (length <= 0)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,13 +36,13 @@ struct sticker_song_find_data {
 	Response &r;
 	const char *name;
 };
-}
+} // namespace
 
 static void
 sticker_song_find_print_cb(const LightSong &song, const char *value,
 			   void *user_data)
 {
-	struct sticker_song_find_data *data =
+	auto *data =
 		(struct sticker_song_find_data *)user_data;
 
 	song_print_uri(data->r, song);

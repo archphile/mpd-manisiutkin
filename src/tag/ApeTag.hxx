@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,9 +26,11 @@ class TagHandler;
 /**
  * Scan the APE tags of a stream.
  *
+ * Throws on I/O error.
+ *
  * @param path_fs the path of the file in filesystem encoding
  */
 bool
-tag_ape_scan2(InputStream &is, TagHandler &handler) noexcept;
+tag_ape_scan2(InputStream &is, TagHandler &handler);
 
 #endif

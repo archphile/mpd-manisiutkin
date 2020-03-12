@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@ public:
 	 * @param visit_song the callback function passed to
 	 * Database::Visit(); may be replaced by this class
 	 */
-	DatabaseVisitorHelper(const DatabaseSelection &selection,
+	DatabaseVisitorHelper(DatabaseSelection selection,
 			      VisitSong &visit_song) noexcept;
 	~DatabaseVisitorHelper() noexcept;
 

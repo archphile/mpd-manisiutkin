@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ class SoftwareMixer final : public Mixer {
 	unsigned volume = 100;
 
 public:
-	SoftwareMixer(MixerListener &_listener)
+	explicit SoftwareMixer(MixerListener &_listener)
 		:Mixer(software_mixer_plugin, _listener)
 	{
 	}
@@ -108,6 +108,6 @@ SoftwareMixer::SetFilter(Filter *_filter) noexcept
 void
 software_mixer_set_filter(Mixer &mixer, Filter *filter) noexcept
 {
-	SoftwareMixer &sm = (SoftwareMixer &)mixer;
+	auto &sm = (SoftwareMixer &)mixer;
 	sm.SetFilter(filter);
 }

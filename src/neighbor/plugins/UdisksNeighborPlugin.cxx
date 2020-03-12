@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -231,7 +231,7 @@ UdisksNeighborExplorer::HandleMessage(DBusConnection *, DBusMessage *message) no
 	    dbus_message_has_signature(message, InterfacesAddedType::value)) {
 		RecurseInterfaceDictEntry(ReadMessageIter(*message), [this](const char *path, auto &&i){
 				UDisks2::Object o(path);
-				UDisks2::ParseObject(o, std::move(i));
+				UDisks2::ParseObject(o, std::forward<decltype(i)>(i));
 				if (o.IsValid())
 					this->Insert(std::move(o));
 			});

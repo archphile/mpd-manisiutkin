@@ -54,9 +54,9 @@ if flac_dep.found()
   ]
 endif
 
-conf.set('ENABLE_VORBIS_DECODER', libvorbis_dep.found() or libvorbisidec_dep.found())
+conf.set('ENABLE_VORBIS_DECODER', vorbis_dep.found())
 conf.set('HAVE_TREMOR', libvorbisidec_dep.found())
-if libvorbis_dep.found() or libvorbisidec_dep.found()
+if vorbis_dep.found()
   decoder_plugins_sources += [
     'VorbisDecoderPlugin.cxx',
     'VorbisDomain.cxx',
@@ -199,8 +199,7 @@ decoder_plugins = static_library(
     libopus_dep,
     libsidplay_dep,
     libsndfile_dep,
-    libvorbis_dep,
-    libvorbisidec_dep,
+    vorbis_dep,
     ogg_dep,
     wavpack_dep,
     wildmidi_dep,

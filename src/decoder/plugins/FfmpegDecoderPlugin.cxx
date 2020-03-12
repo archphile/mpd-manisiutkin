@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 #include "tag/ReplayGain.hxx"
 #include "tag/MixRamp.hxx"
 #include "input/InputStream.hxx"
-#include "CheckAudioFormat.hxx"
+#include "pcm/CheckAudioFormat.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/ConstBuffer.hxx"
 #include "LogV.hxx"
@@ -698,7 +698,7 @@ static const char *const ffmpeg_mime_types[] = {
 	"audio/aac",
 	"audio/aacp",
 	"audio/ac3",
-	"audio/aiff"
+	"audio/aiff",
 	"audio/amr",
 	"audio/basic",
 	"audio/flac",
@@ -711,12 +711,13 @@ static const char *const ffmpeg_mime_types[] = {
 	"audio/qcelp",
 	"audio/vorbis",
 	"audio/vorbis+ogg",
+	"audio/wav",
 	"audio/x-8svx",
 	"audio/x-16sv",
 	"audio/x-aac",
 	"audio/x-ac3",
 	"audio/x-adx",
-	"audio/x-aiff"
+	"audio/x-aiff",
 	"audio/x-alaw",
 	"audio/x-au",
 	"audio/x-dca",
@@ -736,7 +737,7 @@ static const char *const ffmpeg_mime_types[] = {
 	"audio/x-pn-realaudio",
 	"audio/x-pn-multirate-realaudio",
 	"audio/x-speex",
-	"audio/x-tta"
+	"audio/x-tta",
 	"audio/x-voc",
 	"audio/x-wav",
 	"audio/x-wma",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,7 @@ public:
 
 private:
 	/* virtual methods from class SocketMonitor */
-	bool OnSocketReady(unsigned flags) noexcept {
+	bool OnSocketReady(unsigned flags) noexcept override {
 		received = ToAvahiWatchEvent(flags);
 		callback(this, GetSocket().Get(), received, userdata);
 		received = AvahiWatchEvent(0);

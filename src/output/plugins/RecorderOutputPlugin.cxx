@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -67,7 +67,7 @@ class RecorderOutput final : AudioOutput {
 	 */
 	FileOutputStream *file;
 
-	RecorderOutput(const ConfigBlock &block);
+	explicit RecorderOutput(const ConfigBlock &block);
 
 public:
 	static AudioOutput *Create(EventLoop &, const ConfigBlock &block) {
@@ -251,7 +251,7 @@ RecorderOutput::ReopenFormat(AllocatedPath &&new_path)
 	assert(path.IsNull());
 	assert(file == nullptr);
 
-	FileOutputStream *new_file = new FileOutputStream(new_path);
+	auto *new_file = new FileOutputStream(new_path);
 
 	AudioFormat new_audio_format = effective_audio_format;
 

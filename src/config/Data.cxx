@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -50,7 +50,7 @@ template<typename T>
 static auto
 Append(std::forward_list<T> &list, T &&src)
 {
-	return list.emplace_after(FindLast(list), std::move(src));
+	return list.emplace_after(FindLast(list), std::forward<T>(src));
 }
 
 void

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,7 +64,7 @@ public:
 	 *
 	 * This method must be thread-safe.
 	 */
-	virtual const std::map<std::string, std::string> GetAttributes() const noexcept {
+	virtual std::map<std::string, std::string> GetAttributes() const noexcept {
 		return {};
 	}
 

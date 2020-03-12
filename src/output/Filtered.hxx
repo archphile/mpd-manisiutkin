@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #ifndef MPD_FILTERED_AUDIO_OUTPUT_HXX
 #define MPD_FILTERED_AUDIO_OUTPUT_HXX
 
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "filter/Observer.hxx"
 
 #include <memory>
@@ -170,7 +170,7 @@ public:
 	gcc_pure
 	bool SupportsPause() const noexcept;
 
-	const std::map<std::string, std::string> GetAttributes() const noexcept;
+	std::map<std::string, std::string> GetAttributes() const noexcept;
 	void SetAttribute(std::string &&name, std::string &&value);
 
 	/**

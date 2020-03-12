@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,8 @@
 #endif
 
 #ifdef HAVE_ICU_CONVERTER
+
+#include <memory>
 
 #ifdef HAVE_ICU
 struct UConverter;
@@ -74,7 +76,7 @@ public:
 	/**
 	 * Throws std::runtime_error on error.
 	 */
-	static IcuConverter *Create(const char *charset);
+	static std::unique_ptr<IcuConverter> Create(const char *charset);
 
 	/**
 	 * Convert the string to UTF-8.

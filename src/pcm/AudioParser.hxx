@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,15 +17,26 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "bit_reverse.h"
+/** \file
+ *
+ * Parser functions for audio related objects.
+ */
+
+#ifndef MPD_AUDIO_PARSER_HXX
+#define MPD_AUDIO_PARSER_HXX
+
+struct AudioFormat;
 
 /**
- * @see http://graphics.stanford.edu/~seander/bithacks.html#BitReverseTable
+ * Parses a string in the form "SAMPLE_RATE:BITS:CHANNELS" into an
+ * #AudioFormat.
+ *
+ * Throws #std::runtime_error on error.
+ *
+ * @param src the input string
+ * @param mask if true, then "*" is allowed for any number of items
  */
-const uint8_t bit_reverse_table[256] =
-{
-#define R2(n)     n,     n + 2*64,     n + 1*64,     n + 3*64
-#define R4(n) R2(n), R2(n + 2*16), R2(n + 1*16), R2(n + 3*16)
-#define R6(n) R4(n), R4(n + 2*4 ), R4(n + 1*4 ), R4(n + 3*4 )
-    R6(0), R6(2), R6(1), R6(3)
-};
+AudioFormat
+ParseAudioFormat(const char *src, bool mask);
+
+#endif

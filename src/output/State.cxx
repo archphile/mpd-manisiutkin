@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -69,7 +69,7 @@ audio_output_state_read(const char *line, MultipleOutputs &outputs)
 
 	name = endptr + 1;
 	auto *ao = outputs.FindByName(name);
-	if (ao == NULL) {
+	if (ao == nullptr) {
 		FormatDebug(output_domain,
 			    "Ignoring device state for '%s'", name);
 		return true;
@@ -80,7 +80,7 @@ audio_output_state_read(const char *line, MultipleOutputs &outputs)
 }
 
 unsigned
-audio_output_state_get_version(void)
+audio_output_state_get_version()
 {
 	return audio_output_state_version;
 }

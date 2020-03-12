@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,9 +28,9 @@
 #include "input/InputStream.hxx"
 #include "input/Reader.hxx"
 #include "OggCodec.hxx"
+#include "pcm/CheckAudioFormat.hxx"
 #include "pcm/Interleave.hxx"
 #include "util/ScopeExit.hxx"
-#include "CheckAudioFormat.hxx"
 #include "tag/Handler.hxx"
 #include "Log.hxx"
 
@@ -50,8 +50,8 @@ class VorbisDecoder final : public OggDecoder {
 	typedef int16_t out_sample_t;
 #else
 	static constexpr SampleFormat sample_format = SampleFormat::FLOAT;
-	typedef float in_sample_t;
-	typedef float out_sample_t;
+	using in_sample_t = float;
+	using out_sample_t = float;
 #endif
 
 	unsigned remaining_header_packets;
@@ -146,7 +146,7 @@ void
 VorbisDecoder::OnOggBeginning(const ogg_packet &_packet)
 {
 	/* libvorbis wants non-const packets */
-	ogg_packet &packet = const_cast<ogg_packet &>(_packet);
+	auto &packet = const_cast<ogg_packet &>(_packet);
 
 	ReinitVorbis();
 
@@ -251,7 +251,7 @@ void
 VorbisDecoder::OnOggPacket(const ogg_packet &_packet)
 {
 	/* libvorbis wants non-const packets */
-	ogg_packet &packet = const_cast<ogg_packet &>(_packet);
+	auto &packet = const_cast<ogg_packet &>(_packet);
 
 	if (remaining_header_packets > 0) {
 		if (vorbis_synthesis_headerin(&vi, &vc, &packet) != 0)

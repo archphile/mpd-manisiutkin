@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@ public:
 	~AutoGunzipReader() noexcept;
 
 	/* virtual methods from class Reader */
-	virtual size_t Read(void *data, size_t size) override;
+	size_t Read(void *data, size_t size) override;
 
 private:
 	void Detect();

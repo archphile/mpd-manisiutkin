@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ class NullOutput final  : AudioOutput {
 	Timer *timer;
 
 public:
-	NullOutput(const ConfigBlock &block)
+	explicit NullOutput(const ConfigBlock &block)
 		:AudioOutput(0),
 		 sync(block.GetBlockValue("sync", true)) {}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,30 +18,10 @@
  */
 
 #include "PcmDsd.hxx"
-#include "dsd2pcm/dsd2pcm.h"
+#include "Dsd2Pcm.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <assert.h>
-
-PcmDsd::PcmDsd() noexcept
-{
-	dsd2pcm.fill(nullptr);
-}
-
-PcmDsd::~PcmDsd() noexcept
-{
-	for (auto i : dsd2pcm)
-		if (i != nullptr)
-			dsd2pcm_destroy(i);
-}
-
-void
-PcmDsd::Reset() noexcept
-{
-	for (auto i : dsd2pcm)
-		if (i != nullptr)
-			dsd2pcm_reset(i);
-}
 
 ConstBuffer<float>
 PcmDsd::ToFloat(unsigned channels, ConstBuffer<uint8_t> src) noexcept
@@ -49,24 +29,28 @@ PcmDsd::ToFloat(unsigned channels, ConstBuffer<uint8_t> src) noexcept
 	assert(!src.IsNull());
 	assert(!src.empty());
 	assert(src.size % channels == 0);
-	assert(channels <= dsd2pcm.max_size());
 
-	const unsigned num_samples = src.size;
-	const unsigned num_frames = src.size / channels;
+	const size_t num_samples = src.size;
+	const size_t num_frames = src.size / channels;
 
-	float *dest = buffer.GetT<float>(num_samples);
+	auto *dest = buffer.GetT<float>(num_samples);
 
-	for (unsigned c = 0; c < channels; ++c) {
-		if (dsd2pcm[c] == nullptr) {
-			dsd2pcm[c] = dsd2pcm_init();
-			if (dsd2pcm[c] == nullptr)
-				return nullptr;
-		}
+	dsd2pcm.Translate(channels, num_frames, src.data, dest);
+	return { dest, num_samples };
+}
 
-		dsd2pcm_translate(dsd2pcm[c], num_frames,
-				  src.data + c, channels,
-				  false, dest + c, channels);
-	}
+ConstBuffer<int32_t>
+PcmDsd::ToS24(unsigned channels, ConstBuffer<uint8_t> src) noexcept
+{
+	assert(!src.IsNull());
+	assert(!src.empty());
+	assert(src.size % channels == 0);
 
+	const size_t num_samples = src.size;
+	const size_t num_frames = src.size / channels;
+
+	auto *dest = buffer.GetT<int32_t>(num_samples);
+
+	dsd2pcm.TranslateS24(channels, num_frames, src.data, dest);
 	return { dest, num_samples };
 }

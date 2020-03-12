@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,19 +17,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/*
- * Functions for dealing with all configured (enabled) audion outputs
- * at once.
- *
- */
-
 #ifndef OUTPUT_ALL_H
 #define OUTPUT_ALL_H
 
 #include "Control.hxx"
 #include "MusicChunkPtr.hxx"
 #include "player/Outputs.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "ReplayGainMode.hxx"
 #include "Chrono.hxx"
 #include "util/Compiler.h"
@@ -46,7 +40,13 @@ class AudioOutputClient;
 struct ConfigData;
 struct ReplayGainConfig;
 
+/*
+ * Wrap multiple #AudioOutputControl objects a single interface which
+ * keeps them synchronized.
+ */
 class MultipleOutputs final : public PlayerOutputs {
+	AudioOutputClient &client;
+
 	MixerListener &mixer_listener;
 
 	std::vector<std::unique_ptr<AudioOutputControl>> outputs;
@@ -70,17 +70,13 @@ public:
 	 * Load audio outputs from the configuration file and
 	 * initialize them.
 	 */
-	MultipleOutputs(MixerListener &_mixer_listener) noexcept;
+	MultipleOutputs(AudioOutputClient &_client,
+			MixerListener &_mixer_listener) noexcept;
 	~MultipleOutputs() noexcept;
 
 	void Configure(EventLoop &event_loop,
 		       const ConfigData &config,
-		       const ReplayGainConfig &replay_gain_config,
-		       AudioOutputClient &client);
-
-	void AddNullOutput(EventLoop &event_loop,
-			   const ReplayGainConfig &replay_gain_config,
-			   AudioOutputClient &client);
+		       const ReplayGainConfig &replay_gain_config);
 
 	/**
 	 * Returns the total number of audio output devices, including
@@ -107,6 +103,18 @@ public:
 	}
 
 	/**
+	 * Are all outputs dummy?
+	 */
+	gcc_pure
+	bool IsDummy() const noexcept {
+		for (const auto &i : outputs)
+			if (!i->IsDummy())
+				return false;
+
+		return true;
+	}
+
+	/**
 	 * Returns the audio output device with the specified name.
 	 * Returns nullptr if the name does not exist.
 	 */
@@ -120,6 +128,9 @@ public:
 	bool HasName(const char *name) noexcept {
 		return FindByName(name) != nullptr;
 	}
+
+	void Add(std::unique_ptr<FilteredAudioOutput> output,
+		 bool enable) noexcept;
 
 	void SetReplayGainMode(ReplayGainMode mode) noexcept;
 

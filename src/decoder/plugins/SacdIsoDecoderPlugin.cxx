@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2019 The Music Player Daemon Project
+ * Copyright (C) 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 #include "SacdIsoDecoderPlugin.hxx"
 #include "../DecoderAPI.hxx"
 #include "input/InputStream.hxx"
-#include "CheckAudioFormat.hxx"
+#include "pcm/CheckAudioFormat.hxx"
 #include "tag/Handler.hxx"
 #include "tag/Builder.hxx"
 #include "song/DetachedSong.hxx"
@@ -36,7 +36,7 @@
 #include "thread/Cond.hxx"
 #include "thread/Mutex.hxx"
 #include "util/Alloc.hxx"
-#include "util/bit_reverse.h"
+#include "util/BitReverse.hxx"
 #include "util/StringView.hxx"
 #include "util/FormatString.hxx"
 #include "util/AllocatedString.hxx"

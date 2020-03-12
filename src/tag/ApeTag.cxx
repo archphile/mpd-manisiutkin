@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,21 +54,21 @@ tag_ape_import_item(unsigned long flags,
 		return false;
 
 	if (handler.WantPair())
-		for (const auto &i : IterableSplitString(value, '\0'))
+		for (const auto i : IterableSplitString(value, '\0'))
 			handler.OnPair(key, i);
 
 	TagType type = tag_ape_name_parse(key);
 	if (type == TAG_NUM_OF_ITEM_TYPES)
 		return false;
 
-	for (const auto &i : IterableSplitString(value, '\0'))
+	for (const auto i : IterableSplitString(value, '\0'))
 		handler.OnTag(type, i);
 
 	return true;
 }
 
 bool
-tag_ape_scan2(InputStream &is, TagHandler &handler) noexcept
+tag_ape_scan2(InputStream &is, TagHandler &handler)
 {
 	bool recognized = false;
 

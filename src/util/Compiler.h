@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -141,6 +141,14 @@
 #define gcc_flatten __attribute__((flatten))
 #else
 #define gcc_flatten
+#endif
+
+#if GCC_CHECK_VERSION(7,0)
+#define gcc_fallthrough __attribute__((fallthrough))
+#elif CLANG_CHECK_VERSION(10,0) && defined(__cplusplus)
+#define gcc_fallthrough [[fallthrough]]
+#else
+#define gcc_fallthrough
 #endif
 
 #ifndef __cplusplus

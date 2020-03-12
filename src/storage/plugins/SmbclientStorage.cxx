@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ public:
 	SmbclientDirectoryReader(std::string &&_base, unsigned _handle)
 		:base(std::move(_base)), handle(_handle) {}
 
-	virtual ~SmbclientDirectoryReader();
+	~SmbclientDirectoryReader() override;
 
 	/* virtual methods from class StorageDirectoryReader */
 	const char *Read() noexcept override;
@@ -58,7 +58,7 @@ public:
 	SmbclientStorage(const char *_base, SMBCCTX *_ctx)
 		:base(_base), ctx(_ctx) {}
 
-	virtual ~SmbclientStorage() {
+	~SmbclientStorage() override {
 		const std::lock_guard<Mutex> lock(smbclient_mutex);
 		smbc_free_context(ctx, 1);
 	}
@@ -137,7 +137,7 @@ SmbclientStorage::OpenDirectory(const char *uri_utf8)
 			throw MakeErrno("Failed to open directory");
 	}
 
-	return std::make_unique<SmbclientDirectoryReader>(std::move(mapped.c_str()),
+	return std::make_unique<SmbclientDirectoryReader>(std::move(mapped),
 							  handle);
 }
 

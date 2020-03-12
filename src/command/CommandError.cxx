@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -82,7 +82,7 @@ ToAck(DatabaseErrorCode code) noexcept
 
 gcc_pure
 static enum ack
-ToAck(std::exception_ptr ep) noexcept
+ToAck(const std::exception_ptr& ep) noexcept
 {
 	try {
 		std::rethrow_exception(ep);
@@ -113,7 +113,7 @@ ToAck(std::exception_ptr ep) noexcept
 }
 
 void
-PrintError(Response &r, std::exception_ptr ep)
+PrintError(Response &r, const std::exception_ptr& ep)
 {
 	LogError(ep);
 	r.Error(ToAck(ep), GetFullMessage(ep).c_str());

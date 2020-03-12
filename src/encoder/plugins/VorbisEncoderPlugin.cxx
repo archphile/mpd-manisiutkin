@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "VorbisEncoderPlugin.hxx"
 #include "OggEncoder.hxx"
 #include "lib/xiph/VorbisComment.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "config/Domain.hxx"
 #include "util/StringUtil.hxx"
 #include "util/NumberParser.hxx"
@@ -65,7 +65,7 @@ class PreparedVorbisEncoder final : public PreparedEncoder {
 	int bitrate;
 
 public:
-	PreparedVorbisEncoder(const ConfigBlock &block);
+	explicit PreparedVorbisEncoder(const ConfigBlock &block);
 
 	/* virtual methods from class PreparedEncoder */
 	Encoder *Open(AudioFormat &audio_format) override;

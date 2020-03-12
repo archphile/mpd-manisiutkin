@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@
 #include "util/Compiler.h"
 
 #include <functional>
+#include <stdexcept>
 
 namespace UDisks2 {
 
@@ -166,7 +167,7 @@ ParseObjects(ODBus::ReadMessageIter &&i,
 
 	ForEachInterface(std::move(i), [&callback](const char *path, auto &&j){
 			Object o(path);
-			ParseObject(o, std::move(j));
+			ParseObject(o, std::forward<decltype(j)>(j));
 			if (o.IsValid())
 				callback(std::move(o));
 		});

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,17 +37,15 @@ ContentDirectoryService::ContentDirectoryService(const UPnPDevice &device,
 	 m_modelName(device.modelName),
 	 m_rdreqcnt(200)
 {
-	if (!m_modelName.compare("MediaTomb")) {
+	if (m_modelName == "MediaTomb") {
 		// Readdir by 200 entries is good for most, but MediaTomb likes
 		// them really big. Actually 1000 is better but I don't dare
 		m_rdreqcnt = 500;
 	}
 }
 
-ContentDirectoryService::~ContentDirectoryService() noexcept
-{
-	/* this destructor exists here just so it won't get inlined */
-}
+/* this destructor exists here just so it won't get inlined */
+ContentDirectoryService::~ContentDirectoryService() noexcept = default;
 
 std::forward_list<std::string>
 ContentDirectoryService::getSearchCapabilities(UpnpClient_Handle hdl) const
@@ -61,7 +59,7 @@ ContentDirectoryService::getSearchCapabilities(UpnpClient_Handle hdl) const
 	IXML_Document *_response;
 	auto code = UpnpSendAction(hdl, m_actionURL.c_str(),
 				   m_serviceType.c_str(),
-				   0 /*devUDN*/, request.get(), &_response);
+				   nullptr /*devUDN*/, request.get(), &_response);
 	if (code != UPNP_E_SUCCESS)
 		throw FormatRuntimeError("UpnpSendAction() failed: %s",
 					 UpnpGetErrorMessage(code));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ public:
 		:observer(_observer),
 		 prepared_filter(std::move(_prepared_filter)) {}
 
-	~PreparedProxy() noexcept {
+	~PreparedProxy() noexcept override {
 		assert(child == nullptr);
 		assert(observer.proxy == this);
 
@@ -63,7 +63,7 @@ public:
 		:Filter(_filter->GetOutAudioFormat()),
 		 parent(_parent), filter(std::move(_filter)) {}
 
-	~Proxy() noexcept {
+	~Proxy() noexcept override {
 		parent.Clear(this);
 	}
 

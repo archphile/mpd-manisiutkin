@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@
  * A #DecoderClient implementation which dumps metadata to stderr and
  * decoded data to stdout.
  */
-class DumpDecoderClient final : public DecoderClient {
+class DumpDecoderClient : public DecoderClient {
 	bool initialized = false;
 
 	uint16_t prev_kbit_rate = 0;

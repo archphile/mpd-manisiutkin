@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,9 +20,9 @@
 #include "ConvertFilterPlugin.hxx"
 #include "filter/Filter.hxx"
 #include "filter/Prepared.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "pcm/Convert.hxx"
 #include "util/ConstBuffer.hxx"
-#include "AudioFormat.hxx"
 
 #include <memory>
 
@@ -42,7 +42,7 @@ class ConvertFilter final : public Filter {
 	std::unique_ptr<PcmConvert> state;
 
 public:
-	ConvertFilter(const AudioFormat &audio_format);
+	explicit ConvertFilter(const AudioFormat &audio_format);
 
 	void Set(const AudioFormat &_out_audio_format);
 
@@ -130,7 +130,7 @@ convert_filter_new(const AudioFormat in_audio_format,
 void
 convert_filter_set(Filter *_filter, AudioFormat out_audio_format)
 {
-	ConvertFilter *filter = (ConvertFilter *)_filter;
+	auto *filter = (ConvertFilter *)_filter;
 
 	filter->Set(out_audio_format);
 }

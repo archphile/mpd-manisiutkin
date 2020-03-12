@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -71,6 +71,8 @@ class InputCacheManager {
 public:
 	explicit InputCacheManager(const InputCacheConfig &config) noexcept;
 	~InputCacheManager() noexcept;
+
+	void Flush() noexcept;
 
 	gcc_pure
 	bool Contains(const char *uri) noexcept;

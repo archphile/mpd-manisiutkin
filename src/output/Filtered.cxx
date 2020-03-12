@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ FilteredAudioOutput::SupportsPause() const noexcept
 	return output->SupportsPause();
 }
 
-const std::map<std::string, std::string>
+std::map<std::string, std::string>
 FilteredAudioOutput::GetAttributes() const noexcept
 {
 	return output->GetAttributes();

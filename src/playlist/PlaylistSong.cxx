@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,13 @@ merge_song_metadata(DetachedSong &add, const DetachedSong &base) noexcept
 	}
 
 	add.SetLastModified(base.GetLastModified());
+
+	if (add.GetStartTime().IsZero()) {
+		add.SetStartTime(base.GetStartTime());
+	}
+	if (add.GetEndTime().IsZero()) {
+		add.SetEndTime(base.GetEndTime());
+	}
 }
 
 static bool

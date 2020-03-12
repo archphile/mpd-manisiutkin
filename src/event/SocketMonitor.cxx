@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,20 +64,24 @@ SocketMonitor::Close() noexcept
 	Steal().Close();
 }
 
-void
+bool
 SocketMonitor::Schedule(unsigned flags) noexcept
 {
 	assert(IsDefined());
 
 	if (flags == GetScheduledFlags())
-		return;
+		return true;
 
+	bool success;
 	if (scheduled_flags == 0)
-		loop.AddFD(fd.Get(), flags, *this);
+		success = loop.AddFD(fd.Get(), flags, *this);
 	else if (flags == 0)
-		loop.RemoveFD(fd.Get(), *this);
+		success = loop.RemoveFD(fd.Get(), *this);
 	else
-		loop.ModifyFD(fd.Get(), flags, *this);
+		success = loop.ModifyFD(fd.Get(), flags, *this);
 
-	scheduled_flags = flags;
+	if (success)
+		scheduled_flags = flags;
+
+	return success;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -76,9 +76,9 @@ private:
 	typename DT::value_type DitherConvert(typename ST::value_type sample) noexcept;
 
 	template<typename ST, typename DT>
-	void DitherConvert(typename DT::pointer_type dest,
-			   typename ST::const_pointer_type src,
-			   typename ST::const_pointer_type src_end) noexcept;
+	void DitherConvert(typename DT::pointer dest,
+			   typename ST::const_pointer src,
+			   typename ST::const_pointer src_end) noexcept;
 };
 
 #endif

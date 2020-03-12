@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 #include "TagSongFilter.hxx"
 #include "ModifiedSinceSongFilter.hxx"
 #include "AudioFormatSongFilter.hxx"
-#include "AudioParser.hxx"
+#include "pcm/AudioParser.hxx"
 #include "tag/ParseName.hxx"
 #include "time/ISO8601.hxx"
 #include "util/CharUtil.hxx"
@@ -90,10 +90,8 @@ SongFilter::SongFilter(TagType tag, const char *value, bool fold_case)
 							   StringFilter(value, fold_case, fold_case, false)));
 }
 
-SongFilter::~SongFilter()
-{
-	/* this destructor exists here just so it won't get inlined */
-}
+/* this destructor exists here just so it won't get inlined */
+SongFilter::~SongFilter() = default;
 
 std::string
 SongFilter::ToExpression() const noexcept
@@ -106,14 +104,19 @@ ParseTimeStamp(const char *s)
 {
 	assert(s != nullptr);
 
-	char *endptr;
-	unsigned long long value = strtoull(s, &endptr, 10);
-	if (*endptr == 0 && endptr > s)
-		/* it's an integral UNIX time stamp */
-		return std::chrono::system_clock::from_time_t((time_t)value);
+	try {
+		/* try ISO 8601 */
+		return ParseISO8601(s).first;
+	} catch (...) {
+		char *endptr;
+		unsigned long long value = strtoull(s, &endptr, 10);
+		if (*endptr == 0 && endptr > s)
+			/* it's an integral UNIX time stamp */
+			return std::chrono::system_clock::from_time_t((time_t)value);
 
-	/* try ISO 8601 */
-	return ParseISO8601(s).first;
+		/* rethrow the ParseISO8601() error */
+		throw;
+	}
 }
 
 static constexpr bool

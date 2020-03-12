@@ -5,6 +5,10 @@ decoder_api = static_library(
   'DecoderBuffer.cxx',
   'DecoderPlugin.cxx',
   include_directories: inc,
+  dependencies: [
+    log_dep,
+    pcm_basic_dep,
+  ],
 )
 
 decoder_api_dep = declare_dependency(

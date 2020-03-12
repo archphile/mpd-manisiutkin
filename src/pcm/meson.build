@@ -1,49 +1,52 @@
-pcm_sources = [
-  '../CheckAudioFormat.cxx',
-  '../AudioFormat.cxx',
-  '../AudioParser.cxx',
+pcm_basic_sources = [
+  'CheckAudioFormat.cxx',
+  'AudioFormat.cxx',
+  'AudioParser.cxx',
   'SampleFormat.cxx',
   'Interleave.cxx',
   'Buffer.cxx',
   'Export.cxx',
-  'Convert.cxx',
   'Dop.cxx',
   'Volume.cxx',
   'Silence.cxx',
   'Mix.cxx',
-  'PcmChannels.cxx',
   'Pack.cxx',
-  'PcmFormat.cxx',
-  'FormatConverter.cxx',
-  'ChannelsConverter.cxx',
   'Order.cxx',
-  'GlueResampler.cxx',
-  'FallbackResampler.cxx',
-  'ConfiguredResampler.cxx',
   'Dither.cxx',
 ]
 
 if get_option('dsd')
-  pcm_sources += [
+  pcm_basic_sources += [
     'Dsd16.cxx',
     'Dsd32.cxx',
     'PcmDsd.cxx',
-    'dsd2pcm/dsd2pcm.c',
+    'Dsd2Pcm.cxx',
   ]
-
-  executable(
-    'dsd2pcm',
-    'dsd2pcm/main.cpp',
-    'dsd2pcm/dsd2pcm.c',
-    'dsd2pcm/noiseshape.c',
-    include_directories: inc,
-    dependencies: [
-      util_dep,
-    ],
-    build_by_default: get_option('test'),
-    install: false,
-  )
 endif
+
+pcm_basic = static_library(
+  'pcm_basic',
+  pcm_basic_sources,
+  include_directories: inc,
+  dependencies: [
+    util_dep,
+  ],
+)
+
+pcm_basic_dep = declare_dependency(
+  link_with: pcm_basic,
+)
+
+pcm_sources = [
+  'Convert.cxx',
+  'PcmChannels.cxx',
+  'PcmFormat.cxx',
+  'FormatConverter.cxx',
+  'ChannelsConverter.cxx',
+  'GlueResampler.cxx',
+  'FallbackResampler.cxx',
+  'ConfiguredResampler.cxx',
+]
 
 libsamplerate_dep = dependency('samplerate', version: '>= 0.1.3', required: get_option('libsamplerate'))
 if libsamplerate_dep.found()
@@ -63,6 +66,7 @@ pcm = static_library(
   include_directories: inc,
   dependencies: [
     util_dep,
+    pcm_basic_dep,
     libsamplerate_dep,
     soxr_dep,
   ],

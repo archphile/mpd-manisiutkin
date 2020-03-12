@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -80,7 +80,7 @@ public:
 		nfs_init(_loop);
 	}
 
-	~NfsStorage() {
+	~NfsStorage() override {
 		BlockingCall(GetEventLoop(), [this](){ Disconnect(); });
 		nfs_finish();
 	}
@@ -307,7 +307,7 @@ NfsStorage::GetInfo(const char *uri_utf8, bool follow)
 
 gcc_pure
 static bool
-SkipNameFS(PathTraitsFS::const_pointer_type name) noexcept
+SkipNameFS(PathTraitsFS::const_pointer name) noexcept
 {
 	return name[0] == '.' &&
 		(name[1] == 0 ||
@@ -358,7 +358,7 @@ protected:
 
 	void HandleResult(gcc_unused unsigned status,
 			  void *data) noexcept override {
-		struct nfsdir *const dir = (struct nfsdir *)data;
+		auto *const dir = (struct nfsdir *)data;
 
 		CollectEntries(dir);
 		connection.CloseDirectory(dir);

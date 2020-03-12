@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -41,6 +41,7 @@
 #include "util/SplitString.hxx"
 
 #include <string>
+#include <utility>
 
 #include <assert.h>
 #include <string.h>
@@ -107,9 +108,9 @@ private:
 	void VisitServer(const ContentDirectoryService &server,
 			 std::forward_list<std::string> &&vpath,
 			 const DatabaseSelection &selection,
-			 VisitDirectory visit_directory,
-			 VisitSong visit_song,
-			 VisitPlaylist visit_playlist) const;
+			 const VisitDirectory& visit_directory,
+			 const VisitSong& visit_song,
+			 const VisitPlaylist& visit_playlist) const;
 
 	/**
 	 * Run an UPnP search according to MPD parameters, and
@@ -118,7 +119,7 @@ private:
 	void SearchSongs(const ContentDirectoryService &server,
 			 const char *objid,
 			 const DatabaseSelection &selection,
-			 VisitSong visit_song) const;
+			 const VisitSong& visit_song) const;
 
 	UPnPDirContent SearchSongs(const ContentDirectoryService &server,
 				   const char *objid,
@@ -177,7 +178,7 @@ UpnpDatabase::ReturnSong(const LightSong *_song) const noexcept
 {
 	assert(_song != nullptr);
 
-	UpnpSong *song = (UpnpSong *)const_cast<LightSong *>(_song);
+	auto *song = (UpnpSong *)const_cast<LightSong *>(_song);
 	delete song;
 }
 
@@ -311,7 +312,7 @@ UpnpDatabase::SearchSongs(const ContentDirectoryService &server,
 static void
 visitSong(const UPnPDirObject &meta, const char *path,
 	  const DatabaseSelection &selection,
-	  VisitSong visit_song)
+	  const VisitSong& visit_song)
 {
 	if (!visit_song)
 		return;
@@ -339,7 +340,7 @@ void
 UpnpDatabase::SearchSongs(const ContentDirectoryService &server,
 			  const char *objid,
 			  const DatabaseSelection &selection,
-			  VisitSong visit_song) const
+			  const VisitSong& visit_song) const
 {
 	if (!visit_song)
 		return;
@@ -367,7 +368,7 @@ UpnpDatabase::SearchSongs(const ContentDirectoryService &server,
 		// which we later have to detect.
 		const std::string path = songPath(server.getFriendlyName(),
 						  dirent.id);
-		visitSong(std::move(dirent), path.c_str(),
+		visitSong(dirent, path.c_str(),
 			  selection, visit_song);
 	}
 }
@@ -440,7 +441,7 @@ UpnpDatabase::Namei(const ContentDirectoryService &server,
 static void
 VisitItem(const UPnPDirObject &object, const char *uri,
 	  const DatabaseSelection &selection,
-	  VisitSong visit_song, VisitPlaylist visit_playlist)
+	  const VisitSong& visit_song, const VisitPlaylist& visit_playlist)
 {
 	assert(object.type == UPnPDirObject::Type::ITEM);
 
@@ -469,9 +470,9 @@ VisitItem(const UPnPDirObject &object, const char *uri,
 static void
 VisitObject(const UPnPDirObject &object, const char *uri,
 	    const DatabaseSelection &selection,
-	    VisitDirectory visit_directory,
-	    VisitSong visit_song,
-	    VisitPlaylist visit_playlist)
+	    const VisitDirectory& visit_directory,
+	    const VisitSong& visit_song,
+	    const VisitPlaylist& visit_playlist)
 {
 	switch (object.type) {
 	case UPnPDirObject::Type::UNKNOWN:
@@ -497,9 +498,9 @@ void
 UpnpDatabase::VisitServer(const ContentDirectoryService &server,
 			  std::forward_list<std::string> &&vpath,
 			  const DatabaseSelection &selection,
-			  VisitDirectory visit_directory,
-			  VisitSong visit_song,
-			  VisitPlaylist visit_playlist) const
+			  const VisitDirectory& visit_directory,
+			  const VisitSong& visit_song,
+			  const VisitPlaylist& visit_playlist) const
 {
 	/* If the path begins with rootid, we know that this is a
 	   song, not a directory (because that's how we set things
@@ -530,7 +531,7 @@ UpnpDatabase::VisitServer(const ContentDirectoryService &server,
 
 			std::string path = songPath(server.getFriendlyName(),
 						    dirent.id);
-			visitSong(std::move(dirent), path.c_str(),
+			visitSong(dirent, path.c_str(),
 				  selection, visit_song);
 		}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,12 +32,12 @@
 class MyNeighborListener final : public NeighborListener {
  public:
 	/* virtual methods from class NeighborListener */
-	virtual void FoundNeighbor(const NeighborInfo &info) noexcept override {
+	void FoundNeighbor(const NeighborInfo &info) noexcept override {
 		printf("found '%s' (%s)\n",
 		       info.display_name.c_str(), info.uri.c_str());
 	}
 
-	virtual void LostNeighbor(const NeighborInfo &info) noexcept override {
+	void LostNeighbor(const NeighborInfo &info) noexcept override {
 		printf("lost '%s' (%s)\n",
 		       info.display_name.c_str(), info.uri.c_str());
 	}

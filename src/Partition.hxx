@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,8 @@
 #include "Chrono.hxx"
 #include "config.h"
 
+#include <boost/intrusive/list.hpp>
+
 #include <string>
 #include <memory>
 
@@ -39,6 +41,7 @@ struct Instance;
 class MultipleOutputs;
 class SongLoader;
 class ClientListener;
+class Client;
 
 /**
  * A partition of the Music Player Daemon.  It is a separate unit with
@@ -54,6 +57,16 @@ struct Partition final : QueueListener, PlayerListener, MixerListener {
 	const std::string name;
 
 	std::unique_ptr<ClientListener> listener;
+
+	boost::intrusive::list<Client,
+			       boost::intrusive::base_hook<boost::intrusive::list_base_hook<boost::intrusive::tag<Partition>,
+											    boost::intrusive::link_mode<boost::intrusive::normal_link>>>,
+			       boost::intrusive::constant_time_size<false>> clients;
+
+	/**
+	 * Monitor for idle events local to this partition.
+	 */
+	MaskMonitor idle_monitor;
 
 	MaskMonitor global_events;
 
@@ -74,11 +87,20 @@ struct Partition final : QueueListener, PlayerListener, MixerListener {
 
 	~Partition() noexcept;
 
+	void BeginShutdown() noexcept;
+
 	void EmitGlobalEvent(unsigned mask) noexcept {
 		global_events.OrMask(mask);
 	}
 
-	void EmitIdle(unsigned mask) noexcept;
+	/**
+	 * Emit an "idle" event to all clients of this partition.
+	 *
+	 * This method can be called from any thread.
+	 */
+	void EmitIdle(unsigned mask) noexcept {
+		idle_monitor.OrMask(mask);
+	}
 
 	/**
 	 * Populate the #InputCacheManager with soon-to-be-played song
@@ -265,6 +287,9 @@ private:
 
 	/* virtual methods from class MixerListener */
 	void OnMixerVolumeChanged(Mixer &mixer, int volume) noexcept override;
+
+	/* callback for #idle_monitor */
+	void OnIdleMonitor(unsigned mask) noexcept;
 
 	/* callback for #global_events */
 	void OnGlobalEvent(unsigned mask) noexcept;

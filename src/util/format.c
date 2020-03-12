@@ -1,6 +1,6 @@
 /*
  * music player command (mpc)
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
  */
 
 #include "format.h"
+#include "util/Compiler.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -238,6 +239,7 @@ format_object2(const char *format, const char **last, const void *object,
 			}
 
 			/* fall through */
+			gcc_fallthrough;
 
 		default:
 			/* pass-through non-escaped portions of the format string */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -89,9 +89,9 @@ PcmDither::DitherConvert(typename ST::value_type sample) noexcept
 
 template<typename ST, typename DT>
 inline void
-PcmDither::DitherConvert(typename DT::pointer_type dest,
-			 typename ST::const_pointer_type src,
-			 typename ST::const_pointer_type src_end) noexcept
+PcmDither::DitherConvert(typename DT::pointer dest,
+			 typename ST::const_pointer src,
+			 typename ST::const_pointer src_end) noexcept
 {
 	while (src < src_end)
 		*dest++ = DitherConvert<ST, DT>(*src++);
@@ -101,8 +101,8 @@ inline void
 PcmDither::Dither24To16(int16_t *dest, const int32_t *src,
 			const int32_t *src_end) noexcept
 {
-	typedef SampleTraits<SampleFormat::S24_P32> ST;
-	typedef SampleTraits<SampleFormat::S16> DT;
+	using ST = SampleTraits<SampleFormat::S24_P32>;
+	using DT = SampleTraits<SampleFormat::S16>;
 	DitherConvert<ST, DT>(dest, src, src_end);
 }
 
@@ -110,7 +110,7 @@ inline void
 PcmDither::Dither32To16(int16_t *dest, const int32_t *src,
 			const int32_t *src_end) noexcept
 {
-	typedef SampleTraits<SampleFormat::S32> ST;
-	typedef SampleTraits<SampleFormat::S16> DT;
+	using ST = SampleTraits<SampleFormat::S32>;
+	using DT = SampleTraits<SampleFormat::S16>;
 	DitherConvert<ST, DT>(dest, src, src_end);
 }

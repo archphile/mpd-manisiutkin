@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,22 @@ InputCacheManager::~InputCacheManager() noexcept
 	items_by_time.clear_and_dispose(DeleteDisposer());
 }
 
+void
+InputCacheManager::Flush() noexcept
+{
+	items_by_time.remove_and_dispose_if([](const InputCacheItem &item){
+		return !item.IsInUse();
+	}, [this](InputCacheItem *item){
+		// TODO: eliminate code duplication, see method Remove()
+		assert(total_size >= item->size());
+		total_size -= item->size();
+		items_by_uri.erase(items_by_uri.iterator_to(*item));
+		delete item;
+	});
+
+	// TODO: invalidate busy items and flush them later
+}
+
 bool
 InputCacheManager::IsEligible(const InputStream &input) noexcept
 {
@@ -81,11 +97,9 @@ InputCacheManager::Get(const char *uri, bool create)
 	if (!PathTraitsUTF8::IsAbsolute(uri))
 		return {};
 
-	UriMap::insert_commit_data hint;
-	auto result = items_by_uri.insert_check(uri, items_by_uri.key_comp(),
-						hint);
-	if (!result.second) {
-		auto &item = *result.first;
+	auto iter = items_by_uri.find(uri, items_by_uri.key_comp());
+	if (iter != items_by_uri.end()) {
+		auto &item = *iter;
 
 		/* refresh */
 		items_by_time.erase(items_by_time.iterator_to(item));
@@ -112,7 +126,7 @@ InputCacheManager::Get(const char *uri, bool create)
 	while (total_size > max_total_size && EvictOldestUnused()) {}
 
 	auto *item = new InputCacheItem(std::move(is));
-	items_by_uri.insert_commit(*item, hint);
+	items_by_uri.insert(*item);
 	items_by_time.push_back(*item);
 
 	return InputCacheLease(*item);

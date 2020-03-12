@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,9 +26,7 @@
 
 #include <assert.h>
 
-InputStream::~InputStream() noexcept
-{
-}
+InputStream::~InputStream() noexcept = default;
 
 void
 InputStream::Check()
@@ -126,7 +124,7 @@ InputStream::LockRead(void *ptr, size_t _size)
 void
 InputStream::ReadFull(std::unique_lock<Mutex> &lock, void *_ptr, size_t _size)
 {
-	uint8_t *ptr = (uint8_t *)_ptr;
+	auto *ptr = (uint8_t *)_ptr;
 
 	size_t nbytes_total = 0;
 	while (_size > 0) {

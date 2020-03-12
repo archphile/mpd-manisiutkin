@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 #include "PcmDecoderPlugin.hxx"
 #include "../DecoderAPI.hxx"
-#include "CheckAudioFormat.hxx"
+#include "pcm/CheckAudioFormat.hxx"
 #include "pcm/Pack.hxx"
 #include "input/InputStream.hxx"
 #include "util/ByteOrder.hxx"
@@ -33,7 +33,7 @@
 #include "Log.hxx"
 
 #ifdef ENABLE_ALSA
-#include "AudioParser.hxx"
+#include "pcm/AudioParser.hxx"
 #endif
 
 #include <exception>

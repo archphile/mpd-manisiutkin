@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "filter/Filter.hxx"
 #include "filter/Prepared.hxx"
 #include "pcm/Buffer.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "AudioCompress/compress.h"
 #include "util/ConstBuffer.hxx"
 
@@ -34,11 +34,11 @@ class NormalizeFilter final : public Filter {
 	PcmBuffer buffer;
 
 public:
-	NormalizeFilter(const AudioFormat &audio_format)
+	explicit NormalizeFilter(const AudioFormat &audio_format)
 		:Filter(audio_format), compressor(Compressor_new(0)) {
 	}
 
-	~NormalizeFilter() {
+	~NormalizeFilter() override {
 		Compressor_delete(compressor);
 	}
 
@@ -69,7 +69,7 @@ PreparedNormalizeFilter::Open(AudioFormat &audio_format)
 ConstBuffer<void>
 NormalizeFilter::FilterPCM(ConstBuffer<void> src)
 {
-	int16_t *dest = (int16_t *)buffer.Get(src.size);
+	auto *dest = (int16_t *)buffer.Get(src.size);
 	memcpy(dest, src.data, src.size);
 
 	Compressor_Process_int16(compressor, dest, src.size / 2);

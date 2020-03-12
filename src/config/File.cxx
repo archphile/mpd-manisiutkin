@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -72,7 +72,7 @@ config_read_name_value(ConfigBlock &block, char *input, unsigned line)
 		throw FormatRuntimeError("\"%s\" is duplicate, first defined on line %i",
 					 name, bp->line);
 
-	block.AddBlockParam(name, std::move(value), line);
+	block.AddBlockParam(name, value, line);
 }
 
 static ConfigBlock
@@ -112,7 +112,7 @@ ReadConfigBlock(ConfigData &config_data, BufferedReader &reader,
 		const char *name, ConfigBlockOption o,
 		Tokenizer &tokenizer)
 {
-	const unsigned i = unsigned(o);
+	const auto i = unsigned(o);
 	const ConfigTemplate &option = config_block_templates[i];
 
 	if (option.deprecated)
@@ -144,7 +144,7 @@ ReadConfigParam(ConfigData &config_data, BufferedReader &reader,
 		const char *name, ConfigOption o,
 		Tokenizer &tokenizer)
 {
-	const unsigned i = unsigned(o);
+	const auto i = unsigned(o);
 	const ConfigTemplate &option = config_param_templates[i];
 
 	if (option.deprecated)
@@ -153,11 +153,9 @@ ReadConfigParam(ConfigData &config_data, BufferedReader &reader,
 			      name, reader.GetLineNumber());
 
 	if (!option.repeatable)
-		if (const auto *param = config_data.GetParam(o))
-			throw FormatRuntimeError("config parameter \"%s\" is first defined "
-						 "on line %d and redefined on line %u\n",
-						 name, param->line,
-						 reader.GetLineNumber());
+		/* if the option is not repeatable, override the old
+		   value by removing it first */
+		config_data.GetParamList(o).clear();
 
 	/* now parse the block or the value */
 

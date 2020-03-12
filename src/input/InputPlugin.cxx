@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@ InputPlugin::SupportsUri(const char *uri) const noexcept
 			if (StringStartsWithIgnoreCase(uri, *i))
 				return true;
 	} else {
-		for (auto schema : protocols()) {
+		for (const auto& schema : protocols()) {
 			if (StringStartsWithIgnoreCase(uri, schema.c_str())){
 				return true;
 			}

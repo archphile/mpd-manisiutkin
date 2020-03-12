@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ IsGzip(const uint8_t data[4]) noexcept
 inline void
 AutoGunzipReader::Detect()
 {
-	const uint8_t *data = (const uint8_t *)peek.Peek(4);
+	const auto *data = (const uint8_t *)peek.Peek(4);
 	if (data == nullptr) {
 		next = &peek;
 		return;

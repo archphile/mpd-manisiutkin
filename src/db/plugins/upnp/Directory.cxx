@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,10 +30,8 @@
 
 #include <string.h>
 
-UPnPDirContent::~UPnPDirContent()
-{
-	/* this destructor exists here just so it won't get inlined */
-}
+/* this destructor exists here just so it won't get inlined */
+UPnPDirContent::~UPnPDirContent() = default;
 
 gcc_pure
 static UPnPDirObject::ItemClass
@@ -111,7 +109,7 @@ class UPnPDirParser final : public CommonExpatParser {
 	TagBuilder tag;
 
 public:
-	UPnPDirParser(UPnPDirContent &_directory)
+	explicit UPnPDirParser(UPnPDirContent &_directory)
 		:directory(_directory),
 		 state(NONE),
 		 tag_type(TAG_NUM_OF_ITEM_TYPES)

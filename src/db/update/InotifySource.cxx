@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,7 @@ InotifySource::OnSocketReady(gcc_unused unsigned flags) noexcept
 
 	while (true) {
 		const size_t remaining = end - p;
-		const struct inotify_event *event =
+		const auto *event =
 			(const struct inotify_event *)p;
 		if (remaining < sizeof(*event) ||
 		    remaining < sizeof(*event) + event->len)

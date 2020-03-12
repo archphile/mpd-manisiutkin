@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,8 @@
 #include "system/Error.hxx"
 
 gcc_pure
-static PathTraitsFS::pointer_type
-FindSlash(PathTraitsFS::pointer_type p, size_t i) noexcept
+static PathTraitsFS::pointer
+FindSlash(PathTraitsFS::pointer p, size_t i) noexcept
 {
 	for (; i > 0; --i)
 		if (p[i] == '/')
@@ -38,7 +38,7 @@ LookupFile(Path pathname)
 	PathTraitsFS::string buffer(pathname.c_str());
 	size_t idx = buffer.size();
 
-	PathTraitsFS::pointer_type slash = nullptr;
+	PathTraitsFS::pointer slash = nullptr;
 
 	while (true) {
 		try {

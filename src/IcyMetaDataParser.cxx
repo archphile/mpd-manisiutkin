@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 void
 IcyMetaDataParser::SetCharset(const char *charset)
 {
-	icu_converter.reset(IcuConverter::Create(charset));
+	icu_converter = IcuConverter::Create(charset);
 }
 
 #endif
@@ -194,7 +194,7 @@ icy_parse_tag(
 size_t
 IcyMetaDataParser::Meta(const void *data, size_t length) noexcept
 {
-	const unsigned char *p = (const unsigned char *)data;
+	const auto *p = (const unsigned char *)data;
 
 	assert(IsDefined());
 	assert(data_rest == 0);
@@ -254,7 +254,7 @@ IcyMetaDataParser::Meta(const void *data, size_t length) noexcept
 size_t
 IcyMetaDataParser::ParseInPlace(void *data, size_t length) noexcept
 {
-	uint8_t *const dest0 = (uint8_t *)data;
+	auto *const dest0 = (uint8_t *)data;
 	uint8_t *dest = dest0;
 	const uint8_t *src = dest0;
 

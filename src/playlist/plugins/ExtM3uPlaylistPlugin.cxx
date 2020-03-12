@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@ class ExtM3uPlaylist final : public SongEnumerator {
 	TextInputStream tis;
 
 public:
-	ExtM3uPlaylist(InputStreamPtr &&is)
+	explicit ExtM3uPlaylist(InputStreamPtr &&is)
 		:tis(std::move(is)) {
 	}
 
@@ -55,7 +55,7 @@ public:
 		return nullptr;
 	}
 
-	virtual std::unique_ptr<DetachedSong> NextSong() override;
+	std::unique_ptr<DetachedSong> NextSong() override;
 };
 
 static std::unique_ptr<SongEnumerator>

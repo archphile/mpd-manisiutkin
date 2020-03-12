@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,26 +17,37 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/** \file
- *
- * Parser functions for audio related objects.
- */
+#ifndef MPD_BIT_REVERSE_HXX
+#define MPD_BIT_REVERSE_HXX
 
-#ifndef MPD_AUDIO_PARSER_HXX
-#define MPD_AUDIO_PARSER_HXX
+#include "Compiler.h"
 
-struct AudioFormat;
+#include <stdint.h>
 
 /**
- * Parses a string in the form "SAMPLE_RATE:BITS:CHANNELS" into an
- * #AudioFormat.
- *
- * Throws #std::runtime_error on error.
- *
- * @param src the input string
- * @param mask if true, then "*" is allowed for any number of items
+ * @see http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith64BitsDiv
  */
-AudioFormat
-ParseAudioFormat(const char *src, bool mask);
+constexpr uint8_t
+BitReverseMultiplyModulus(uint8_t _in) noexcept
+{
+	uint64_t in = _in;
+	return uint8_t((in * 0x0202020202ULL & 0x010884422010ULL) % 1023);
+}
+
+/* in order to avoid including <array> in this header, this `struct`
+   is a workaround for GenerateBitReverseTable() being able to return
+   the plain array */
+struct BitReverseTable {
+	uint8_t data[256];
+};
+
+extern const BitReverseTable bit_reverse_table;
+
+gcc_const
+static inline uint8_t
+bit_reverse(uint8_t x) noexcept
+{
+	return bit_reverse_table.data[x];
+}
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,7 @@ ThreadBackgroundCommand::DeferredFinish() noexcept
 	Response response(client, 0);
 
 	if (error) {
-		PrintError(response, std::move(error));
+		PrintError(response, error);
 	} else {
 		SendResponse(response);
 		command_success(client);

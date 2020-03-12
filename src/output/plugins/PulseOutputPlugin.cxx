@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -326,9 +326,9 @@ inline void
 PulseOutput::OnServerLayoutChanged(pa_subscription_event_type_t t,
 				   uint32_t idx)
 {
-	pa_subscription_event_type_t facility =
+	auto facility =
 		pa_subscription_event_type_t(t & PA_SUBSCRIPTION_EVENT_FACILITY_MASK);
-	pa_subscription_event_type_t type =
+	auto type =
 		pa_subscription_event_type_t(t & PA_SUBSCRIPTION_EVENT_TYPE_MASK);
 
 	if (mixer != nullptr &&
@@ -658,7 +658,7 @@ PulseOutput::Open(AudioFormat &audio_format)
 		break;
 	}
 
-	ss.rate = audio_format.sample_rate;
+	ss.rate = std::min(audio_format.sample_rate, PA_RATE_MAX);
 	ss.channels = audio_format.channels;
 
 	/* create a stream .. */
@@ -872,7 +872,7 @@ try {
 }
 
 static bool
-pulse_output_test_default_device(void)
+pulse_output_test_default_device()
 {
 	return PulseOutput::TestDefaultDevice();
 }

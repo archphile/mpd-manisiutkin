@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 #include "ConfiguredResampler.hxx"
 #include "util/ConstBuffer.hxx"
 
+#include <stdexcept>
+
 #include <assert.h>
 
 void
@@ -37,8 +39,16 @@ PcmConvert::PcmConvert(const AudioFormat _src_format,
 	assert(dest_format.IsValid());
 
 	AudioFormat format = _src_format;
-	if (format.format == SampleFormat::DSD)
-		format.format = SampleFormat::FLOAT;
+	if (format.format == SampleFormat::DSD) {
+#ifdef ENABLE_DSD
+		dsd2pcm_float = dest_format.format == SampleFormat::FLOAT;
+		format.format = dsd2pcm_float
+			? SampleFormat::FLOAT
+			: SampleFormat::S24_P32;
+#else
+		throw std::runtime_error("DSD support is disabled");
+#endif
+	}
 
 	enable_resampler = format.sample_rate != dest_format.sample_rate;
 	if (enable_resampler) {
@@ -108,11 +118,13 @@ PcmConvert::Convert(ConstBuffer<void> buffer)
 #ifdef ENABLE_DSD
 	if (src_format.format == SampleFormat::DSD) {
 		auto s = ConstBuffer<uint8_t>::FromVoid(buffer);
-		auto d = dsd.ToFloat(src_format.channels, s);
+		auto d = dsd2pcm_float
+			? dsd.ToFloat(src_format.channels, s).ToVoid()
+			: dsd.ToS24(src_format.channels, s).ToVoid();
 		if (d.IsNull())
 			throw std::runtime_error("DSD to PCM conversion failed");
 
-		buffer = d.ToVoid();
+		buffer = d;
 	}
 #endif
 

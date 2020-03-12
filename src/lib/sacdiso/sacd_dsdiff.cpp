@@ -1,6 +1,6 @@
 /*
 * MPD SACD Decoder plugin
-* Copyright (c) 2011-2019 Maxim V.Anisiutkin <maxim.anisiutkin@gmail.com>
+* Copyright (c) 2011-2020 Maxim V.Anisiutkin <maxim.anisiutkin@gmail.com>
 *
 * This program is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -345,7 +345,7 @@ bool sacd_dsdiff_t::select_track(uint32_t _track_index, area_id_e area_id, uint3
 					current_size = get_dsti_for_frame((uint32_t)(t1 * framerate)) - current_offset;
 				}
 				else {
-					current_size = size;
+					current_size = data_size;
 				}
 			}
 			else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CEILING(x, y) ((x+(y-1))/y)
+#include <utility>
+
+static constexpr size_t
+CEILING(size_t x, size_t y) noexcept
+{
+	return (x + y - 1) / y;
+}
 
 struct Iso9660 {
 	iso9660_t *const iso;
@@ -62,7 +68,7 @@ class Iso9660ArchiveFile final : public ArchiveFile {
 	std::shared_ptr<Iso9660> iso;
 
 public:
-	Iso9660ArchiveFile(std::shared_ptr<Iso9660> &&_iso)
+	explicit Iso9660ArchiveFile(std::shared_ptr<Iso9660> &&_iso)
 		:iso(std::move(_iso)) {}
 
 	/**
@@ -71,7 +77,7 @@ public:
 	void Visit(char *path, size_t length, size_t capacity,
 		   ArchiveVisitor &visitor);
 
-	virtual void Visit(ArchiveVisitor &visitor) override;
+	void Visit(ArchiveVisitor &visitor) override;
 
 	InputStreamPtr OpenStream(const char *path,
 				  Mutex &mutex) override;
@@ -141,18 +147,18 @@ class Iso9660InputStream final : public InputStream {
 	iso9660_stat_t *statbuf;
 
 public:
-	Iso9660InputStream(const std::shared_ptr<Iso9660> &_iso,
+	Iso9660InputStream(std::shared_ptr<Iso9660> _iso,
 			   const char *_uri,
 			   Mutex &_mutex,
 			   iso9660_stat_t *_statbuf)
 		:InputStream(_uri, _mutex),
-		 iso(_iso), statbuf(_statbuf) {
+		 iso(std::move(_iso)), statbuf(_statbuf) {
 		size = statbuf->size;
 		seekable = true;
 		SetReady();
 	}
 
-	~Iso9660InputStream() {
+	~Iso9660InputStream() override {
 		free(statbuf);
 	}
 

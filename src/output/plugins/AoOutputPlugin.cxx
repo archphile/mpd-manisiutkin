@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,8 +52,8 @@ class AoOutput final : AudioOutput, SafeSingleton<AoInit> {
 
 	size_t frame_size;
 
-	AoOutput(const ConfigBlock &block);
-	~AoOutput();
+	explicit AoOutput(const ConfigBlock &block);
+	~AoOutput() override;
 
 public:
 	static AudioOutput *Create(EventLoop &, const ConfigBlock &block) {
@@ -101,7 +101,7 @@ MakeAoError()
 
 AoOutput::AoOutput(const ConfigBlock &block)
 	:AudioOutput(0),
-	 write_size(block.GetPositiveValue("write_size", 1024u))
+	 write_size(block.GetPositiveValue("write_size", 1024U))
 {
 	const char *value = block.GetBlockValue("driver", "default");
 	if (StringIsEqual(value, "default"))

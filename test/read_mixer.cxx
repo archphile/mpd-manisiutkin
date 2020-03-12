@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ const FilterPlugin *
 filter_plugin_by_name(gcc_unused const char *name) noexcept
 {
 	assert(false);
-	return NULL;
+	return nullptr;
 }
 
 int main(int argc, gcc_unused char **argv)

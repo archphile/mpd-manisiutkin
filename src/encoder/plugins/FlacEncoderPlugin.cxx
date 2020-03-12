@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include "FlacEncoderPlugin.hxx"
 #include "../EncoderAPI.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "pcm/Buffer.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "util/RuntimeError.hxx"
@@ -82,7 +82,7 @@ class PreparedFlacEncoder final : public PreparedEncoder {
 	const unsigned compression;
 
 public:
-	PreparedFlacEncoder(const ConfigBlock &block);
+	explicit PreparedFlacEncoder(const ConfigBlock &block);
 
 	/* virtual methods from class PreparedEncoder */
 	Encoder *Open(AudioFormat &audio_format) override;
@@ -93,7 +93,7 @@ public:
 };
 
 PreparedFlacEncoder::PreparedFlacEncoder(const ConfigBlock &block)
-	:compression(block.GetBlockValue("compression", 5u))
+	:compression(block.GetBlockValue("compression", 5U))
 {
 }
 

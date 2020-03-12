@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include "OpusEncoderPlugin.hxx"
 #include "OggEncoder.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringUtil.hxx"
 
@@ -79,7 +79,7 @@ class PreparedOpusEncoder final : public PreparedEncoder {
 	const bool chaining;
 
 public:
-	PreparedOpusEncoder(const ConfigBlock &block);
+	explicit PreparedOpusEncoder(const ConfigBlock &block);
 
 	/* virtual methods from class PreparedEncoder */
 	Encoder *Open(AudioFormat &audio_format) override;
@@ -105,7 +105,7 @@ PreparedOpusEncoder::PreparedOpusEncoder(const ConfigBlock &block)
 			throw std::runtime_error("Invalid bit rate");
 	}
 
-	complexity = block.GetBlockValue("complexity", 10u);
+	complexity = block.GetBlockValue("complexity", 10U);
 	if (complexity > 10)
 		throw std::runtime_error("Invalid complexity");
 
@@ -120,7 +120,7 @@ PreparedOpusEncoder::PreparedOpusEncoder(const ConfigBlock &block)
 		throw std::runtime_error("Invalid signal");
 }
 
-static PreparedEncoder *
+PreparedEncoder *
 opus_encoder_init(const ConfigBlock &block)
 {
 	return new PreparedOpusEncoder(block);
@@ -248,7 +248,7 @@ OpusEncoder::WriteSilence(unsigned fill_frames)
 void
 OpusEncoder::Write(const void *_data, size_t length)
 {
-	const uint8_t *data = (const uint8_t *)_data;
+	const auto *data = (const uint8_t *)_data;
 
 	if (lookahead > 0) {
 		/* generate some silence at the beginning of the
@@ -323,7 +323,7 @@ OpusEncoder::GenerateTags(const Tag *tag) noexcept
 		}
 	}
 
-	unsigned char *comments = new unsigned char[comments_size];
+	auto *comments = new unsigned char[comments_size];
 	unsigned char *p = comments;
 
 	memcpy(comments, "OpusTags", 8);
@@ -387,7 +387,7 @@ OpusEncoder::SendTag(const Tag &tag)
 	GenerateHeaders(&tag);
 }
 
-}
+} // namespace
 
 const EncoderPlugin opus_encoder_plugin = {
 	"opus",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,6 @@ search_add_to_playlist(const Database &db, const Storage *storage,
 		       const DatabaseSelection &selection)
 {
 	using namespace std::placeholders;
-	const auto f = std::bind(AddSong, storage,
-				 playlist_path_utf8, _1);
+	const auto f = [=](auto && arg1) { return AddSong(storage, playlist_path_utf8, arg1); };
 	db.Visit(selection, f);
 }

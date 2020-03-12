@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -92,7 +92,7 @@ initPermissions(const ConfigData &config)
 			const char *separator = strchr(value,
 						       PERMISSION_PASSWORD_CHAR);
 
-			if (separator == NULL)
+			if (separator == nullptr)
 				throw FormatRuntimeError("\"%c\" not found in password string",
 							 PERMISSION_PASSWORD_CHAR);
 

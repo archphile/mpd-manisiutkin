@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,24 +38,24 @@ static constexpr Domain mikmod_domain("mikmod");
 static constexpr size_t MIKMOD_FRAME_SIZE = 4096;
 
 static BOOL
-mikmod_mpd_init(void)
+mikmod_mpd_init()
 {
 	return VC_Init();
 }
 
 static void
-mikmod_mpd_exit(void)
+mikmod_mpd_exit()
 {
 	VC_Exit();
 }
 
 static void
-mikmod_mpd_update(void)
+mikmod_mpd_update()
 {
 }
 
 static BOOL
-mikmod_mpd_is_present(void)
+mikmod_mpd_is_present()
 {
 	return true;
 }
@@ -108,7 +108,7 @@ mikmod_decoder_init(const ConfigBlock &block)
 	static char params[] = "";
 
 	mikmod_loop = block.GetBlockValue("loop", false);
-	mikmod_sample_rate = block.GetPositiveValue("sample_rate", 44100u);
+	mikmod_sample_rate = block.GetPositiveValue("sample_rate", 44100U);
 	if (!audio_valid_sample_rate(mikmod_sample_rate))
 		throw FormatRuntimeError("Invalid sample rate in line %d: %u",
 					 block.line, mikmod_sample_rate);

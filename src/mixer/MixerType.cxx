@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 MixerType
 mixer_type_parse(const char *input)
 {
-	assert(input != NULL);
+	assert(input != nullptr);
 
 	if (strcmp(input, "none") == 0 || strcmp(input, "disabled") == 0)
 		return MixerType::NONE;

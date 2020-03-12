@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -57,13 +57,14 @@ OggSeekPageAtOffset(OggSyncState &oy, ogg_stream_state &os, InputStream &is,
 
 bool
 OggSeekFindEOS(OggSyncState &oy, ogg_stream_state &os, ogg_packet &packet,
-	       InputStream &is)
+	       InputStream &is, bool synced)
 {
 	if (!is.KnownSize())
 		return false;
 
 	if (is.GetRest() < 65536)
-		return OggFindEOS(oy, os, packet);
+		return (synced || oy.ExpectPageSeekIn(os)) &&
+			OggFindEOS(oy, os, packet);
 
 	if (!is.CheapSeeking())
 		return false;

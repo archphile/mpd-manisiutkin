@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -210,7 +210,7 @@ class AlsaOutput final
 public:
 	AlsaOutput(EventLoop &loop, const ConfigBlock &block);
 
-	~AlsaOutput() noexcept {
+	~AlsaOutput() noexcept override {
 		/* free libasound's config cache */
 		snd_config_update_free_global();
 	}
@@ -228,7 +228,7 @@ public:
 	}
 
 private:
-	const std::map<std::string, std::string> GetAttributes() const noexcept override;
+	std::map<std::string, std::string> GetAttributes() const noexcept override;
 	void SetAttribute(std::string &&name, std::string &&value) override;
 
 	void Enable() override;
@@ -404,7 +404,7 @@ AlsaOutput::AlsaOutput(EventLoop &_loop, const ConfigBlock &block)
 #endif
 	 buffer_time(block.GetPositiveValue("buffer_time",
 					    MPD_ALSA_BUFFER_TIME_US)),
-	 period_time(block.GetPositiveValue("period_time", 0u))
+	 period_time(block.GetPositiveValue("period_time", 0U))
 {
 #ifdef SND_PCM_NO_AUTO_RESAMPLE
 	if (!block.GetBlockValue("auto_resample", true))
@@ -427,7 +427,7 @@ AlsaOutput::AlsaOutput(EventLoop &_loop, const ConfigBlock &block)
 		allowed_formats = Alsa::AllowedFormat::ParseList(allowed_formats_string);
 }
 
-const std::map<std::string, std::string>
+std::map<std::string, std::string>
 AlsaOutput::GetAttributes() const noexcept
 {
 	const std::lock_guard<Mutex> lock(attributes_mutex);

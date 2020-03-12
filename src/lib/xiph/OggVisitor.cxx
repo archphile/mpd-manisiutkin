@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -94,9 +94,10 @@ OggVisitor::Visit()
 }
 
 void
-OggVisitor::PostSeek()
+OggVisitor::PostSeek(uint64_t offset)
 {
 	sync.Reset();
+	sync.SetOffset(offset);
 
 	/* reset the stream to clear any previous partial packet
 	   data */
@@ -106,4 +107,15 @@ OggVisitor::PostSeek()
 	sync.ExpectPageSeekIn(stream);
 
 	post_seek = true;
+}
+
+ogg_int64_t
+OggVisitor::ReadGranulepos() noexcept
+{
+	ogg_packet packet;
+	while (stream.PacketOut(packet) == 1)
+		if (packet.granulepos >= 0)
+			return packet.granulepos;
+
+	return -1;
 }

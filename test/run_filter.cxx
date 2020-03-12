@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,11 +19,11 @@
 
 #include "ConfigGlue.hxx"
 #include "fs/Path.hxx"
-#include "AudioParser.hxx"
-#include "AudioFormat.hxx"
 #include "filter/LoadOne.hxx"
 #include "filter/Filter.hxx"
 #include "filter/Prepared.hxx"
+#include "pcm/AudioParser.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "pcm/Volume.hxx"
 #include "mixer/MixerControl.hxx"
 #include "system/Error.hxx"
@@ -52,7 +52,7 @@ LoadFilter(const ConfigData &config, const char *name)
 {
 	const auto *param = config.FindBlock(ConfigBlockOption::AUDIO_FILTER,
 					     "name", name);
-	if (param == NULL)
+	if (param == nullptr)
 		throw FormatRuntimeError("No such configured filter: %s",
 					 name);
 
@@ -77,21 +77,6 @@ WriteOrThrow(FileDescriptor fd, const void *buffer, size_t size)
 		throw MakeErrno("Write failed");
 
 	return nbytes;
-}
-
-static void
-FullRead(FileDescriptor fd, void *_buffer, size_t size)
-{
-	auto buffer = (uint8_t *)_buffer;
-
-	while (size > 0) {
-		size_t nbytes = ReadOrThrow(fd, buffer, size);
-		if (nbytes == 0)
-			throw std::runtime_error("Premature end of input");
-
-		buffer += nbytes;
-		size -= nbytes;
-	}
 }
 
 static void
@@ -124,7 +109,7 @@ ReadFrames(FileDescriptor fd, void *_buffer, size_t size, size_t frame_size)
 	const size_t modulo = nbytes % frame_size;
 	if (modulo > 0) {
 		size_t rest = frame_size - modulo;
-		FullRead(fd, buffer + nbytes, rest);
+		fd.FullRead(buffer + nbytes, rest);
 		nbytes += rest;
 	}
 

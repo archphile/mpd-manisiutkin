@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -101,6 +101,10 @@ struct Instance final
 
 	std::unique_ptr<InputCacheManager> input_cache;
 
+	/**
+	 * Monitor for global idle events to be broadcasted to all
+	 * partitions.
+	 */
 	MaskMonitor idle_monitor;
 
 #ifdef ENABLE_NEIGHBOR_PLUGINS
@@ -127,7 +131,7 @@ struct Instance final
 
 	std::list<Partition> partitions;
 
-	StateFile *state_file = nullptr;
+	std::unique_ptr<StateFile> state_file;
 
 #ifdef ENABLE_SQLITE
 	std::unique_ptr<StickerDatabase> sticker_database;
@@ -143,9 +147,22 @@ struct Instance final
 		event_loop.Break();
 	}
 
+	/**
+	 * Emit an "idle" event to all clients of all partitions.
+	 *
+	 * This method can be called from any thread.
+	 */
 	void EmitIdle(unsigned mask) noexcept {
 		idle_monitor.OrMask(mask);
 	}
+
+	/**
+	 * Notify the #Instance that the state has been modified, and
+	 * the #StateFile may need to be saved.
+	 *
+	 * This method must be called from the main thread.
+	 */
+	void OnStateModified() noexcept;
 
 	/**
 	 * Find a #Partition with the given name.  Returns nullptr if
@@ -153,6 +170,8 @@ struct Instance final
 	 */
 	gcc_pure
 	Partition *FindPartition(const char *name) noexcept;
+
+	void DeletePartition(Partition &partition) noexcept;
 
 	void BeginShutdownPartitions() noexcept;
 
@@ -189,6 +208,8 @@ struct Instance final
 		/* no-op */
 	}
 #endif
+
+	void FlushCaches() noexcept;
 
 private:
 #ifdef ENABLE_DATABASE

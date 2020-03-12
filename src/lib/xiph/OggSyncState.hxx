@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include <ogg/ogg.h>
 
 #include <stddef.h>
+#include <stdint.h>
 
 class Reader;
 
@@ -33,6 +34,17 @@ class OggSyncState {
 	ogg_sync_state oy;
 
 	Reader &reader;
+
+	/**
+	 * Keeps track of the end offset of the most recently returned
+	 * page.
+	 */
+	uint64_t offset = 0;
+
+	/**
+	 * The start offset of the most recently returned page.
+	 */
+	uint64_t start_offset = 0;
 
 public:
 	explicit OggSyncState(Reader &_reader)
@@ -49,6 +61,14 @@ public:
 
 	void Reset() noexcept {
 		ogg_sync_reset(&oy);
+	}
+
+	void SetOffset(uint64_t _offset) noexcept {
+		offset = _offset;
+	}
+
+	uint64_t GetStartOffset() const noexcept {
+		return start_offset;
 	}
 
 	bool Feed(size_t size);

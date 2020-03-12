@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -78,7 +78,7 @@ constexpr auto USER_CONFIG_FILE_LOCATION1 = Path::FromFS(PATH_LITERAL(".mpdconf"
 constexpr auto USER_CONFIG_FILE_LOCATION2 = Path::FromFS(PATH_LITERAL(".mpd/mpd.conf"));
 constexpr auto USER_CONFIG_FILE_LOCATION_XDG = Path::FromFS(PATH_LITERAL("mpd/mpd.conf"));
 #endif
-}
+} // namespace
 
 enum Option {
 	OPTION_KILL,
@@ -107,7 +107,7 @@ static constexpr OptionDef option_defs[] = {
 static constexpr Domain cmdline_domain("cmdline");
 
 gcc_noreturn
-static void version(void)
+static void version()
 {
 	printf("Music Player Daemon " VERSION " (%s)"
 	       "\n"
@@ -273,7 +273,7 @@ static void PrintOption(const OptionDef &opt)
 }
 
 gcc_noreturn
-static void help(void)
+static void help()
 {
 	printf("Usage:\n"
 	       "  mpd [OPTION...] [path/to/mpd.conf]\n"
@@ -283,7 +283,7 @@ static void help(void)
 	       "Options:\n");
 
 	for (const auto &i : option_defs)
-		if(i.HasDescription() == true) // hide hidden options from help print
+		if(i.HasDescription()) // hide hidden options from help print
 			PrintOption(i);
 
 	exit(EXIT_SUCCESS);
@@ -297,7 +297,7 @@ public:
 	explicit ConfigLoader(ConfigData &_config) noexcept
 		:config(_config) {}
 
-	bool TryFile(const Path path);
+	bool TryFile(Path path);
 	bool TryFile(const AllocatedPath &base_path, Path path);
 };
 

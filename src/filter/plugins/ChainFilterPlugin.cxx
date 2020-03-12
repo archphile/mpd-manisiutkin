@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "ChainFilterPlugin.hxx"
 #include "filter/Filter.hxx"
 #include "filter/Prepared.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StringBuffer.hxx"
 #include "util/RuntimeError.hxx"
@@ -181,7 +181,7 @@ void
 filter_chain_append(PreparedFilter &_chain, const char *name,
 		    std::unique_ptr<PreparedFilter> filter) noexcept
 {
-	PreparedChainFilter &chain = (PreparedChainFilter &)_chain;
+	auto &chain = (PreparedChainFilter &)_chain;
 
 	chain.Append(name, std::move(filter));
 }

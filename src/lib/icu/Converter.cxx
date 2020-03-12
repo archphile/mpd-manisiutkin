@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ IcuConverter::~IcuConverter()
 
 #ifdef HAVE_ICU_CONVERTER
 
-IcuConverter *
+std::unique_ptr<IcuConverter>
 IcuConverter::Create(const char *charset)
 {
 #ifdef HAVE_ICU
@@ -56,7 +56,7 @@ IcuConverter::Create(const char *charset)
 		throw std::runtime_error(FormatString("Failed to initialize charset '%s': %s",
 						      charset, u_errorName(code)).c_str());
 
-	return new IcuConverter(converter);
+	return std::unique_ptr<IcuConverter>(new IcuConverter(converter));
 #elif defined(HAVE_ICONV)
 	iconv_t to = iconv_open("utf-8", charset);
 	iconv_t from = iconv_open(charset, "utf-8");
@@ -70,7 +70,7 @@ IcuConverter::Create(const char *charset)
 				  charset);
 	}
 
-	return new IcuConverter(to, from);
+	return std::unique_ptr<IcuConverter>(new IcuConverter(to, from));
 #endif
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 #include <bzlib.h>
 
 #include <stdexcept>
+#include <utility>
 
 class Bzip2ArchiveFile final : public ArchiveFile {
 	std::string name;
@@ -47,7 +48,7 @@ public:
 			name.erase(len - 4);
 	}
 
-	virtual void Visit(ArchiveVisitor &visitor) override {
+	void Visit(ArchiveVisitor &visitor) override {
 		visitor.VisitArchiveEntry(name.c_str());
 	}
 
@@ -65,10 +66,10 @@ class Bzip2InputStream final : public InputStream {
 	char buffer[5000];
 
 public:
-	Bzip2InputStream(const std::shared_ptr<InputStream> &_input,
+	Bzip2InputStream(std::shared_ptr<InputStream> _input,
 			 const char *uri,
 			 Mutex &mutex);
-	~Bzip2InputStream();
+	~Bzip2InputStream() override;
 
 	/* virtual methods from InputStream */
 	bool IsEOF() const noexcept override;
@@ -111,11 +112,11 @@ bz2_open(Path pathname)
 
 /* single archive handling */
 
-Bzip2InputStream::Bzip2InputStream(const std::shared_ptr<InputStream> &_input,
+Bzip2InputStream::Bzip2InputStream(std::shared_ptr<InputStream> _input,
 				   const char *_uri,
 				   Mutex &_mutex)
 	:InputStream(_uri, _mutex),
-	 input(_input)
+	 input(std::move(_input))
 {
 	Open();
 }

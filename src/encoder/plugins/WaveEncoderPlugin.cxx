@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,7 +33,7 @@ class WaveEncoder final : public Encoder {
 	DynamicFifoBuffer<uint8_t> buffer;
 
 public:
-	WaveEncoder(AudioFormat &audio_format) noexcept;
+	explicit WaveEncoder(AudioFormat &audio_format) noexcept;
 
 	/* virtual methods from class Encoder */
 	void Write(const void *data, size_t length) override;

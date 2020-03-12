@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ class AllocatedPath;
  * Wrapper for fopen() that uses #Path names.
  */
 static inline FILE *
-FOpen(Path file, PathTraitsFS::const_pointer_type mode)
+FOpen(Path file, PathTraitsFS::const_pointer mode)
 {
 #ifdef _WIN32
 	return _tfopen(file.c_str(), mode);

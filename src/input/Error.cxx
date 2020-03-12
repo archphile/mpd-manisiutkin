@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,11 +30,13 @@
 #include <nfsc/libnfs-raw-nfs.h>
 #endif
 
+#include <utility>
+
 bool
 IsFileNotFound(std::exception_ptr ep) noexcept
 {
 	try {
-		std::rethrow_exception(ep);
+		std::rethrow_exception(std::move(ep));
 	} catch (const std::system_error &e) {
 		return IsFileNotFound(e);
 #ifdef ENABLE_CURL

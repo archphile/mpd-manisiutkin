@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "MpcdecDecoderPlugin.hxx"
 #include "../DecoderAPI.hxx"
 #include "input/InputStream.hxx"
-#include "CheckAudioFormat.hxx"
+#include "pcm/CheckAudioFormat.hxx"
 #include "pcm/Traits.hxx"
 #include "tag/Handler.hxx"
 #include "util/Domain.hxx"
@@ -45,12 +45,12 @@ struct mpc_decoder_data {
 static constexpr Domain mpcdec_domain("mpcdec");
 
 static constexpr SampleFormat mpcdec_sample_format = SampleFormat::S24_P32;
-typedef SampleTraits<mpcdec_sample_format> MpcdecSampleTraits;
+using MpcdecSampleTraits = SampleTraits<mpcdec_sample_format>;
 
 static mpc_int32_t
 mpc_read_cb(mpc_reader *reader, void *ptr, mpc_int32_t size)
 {
-	struct mpc_decoder_data *data =
+	auto *data =
 		(struct mpc_decoder_data *)reader->data;
 
 	return decoder_read(data->client, data->is, ptr, size);
@@ -59,7 +59,7 @@ mpc_read_cb(mpc_reader *reader, void *ptr, mpc_int32_t size)
 static mpc_bool_t
 mpc_seek_cb(mpc_reader *reader, mpc_int32_t offset)
 {
-	struct mpc_decoder_data *data =
+	auto *data =
 		(struct mpc_decoder_data *)reader->data;
 
 	try {
@@ -73,7 +73,7 @@ mpc_seek_cb(mpc_reader *reader, mpc_int32_t offset)
 static mpc_int32_t
 mpc_tell_cb(mpc_reader *reader)
 {
-	struct mpc_decoder_data *data =
+	auto *data =
 		(struct mpc_decoder_data *)reader->data;
 
 	return (long)data->is.GetOffset();
@@ -82,7 +82,7 @@ mpc_tell_cb(mpc_reader *reader)
 static mpc_bool_t
 mpc_canseek_cb(mpc_reader *reader)
 {
-	struct mpc_decoder_data *data =
+	auto *data =
 		(struct mpc_decoder_data *)reader->data;
 
 	return data->is.IsSeekable();
@@ -91,7 +91,7 @@ mpc_canseek_cb(mpc_reader *reader)
 static mpc_int32_t
 mpc_getsize_cb(mpc_reader *reader)
 {
-	struct mpc_decoder_data *data =
+	auto *data =
 		(struct mpc_decoder_data *)reader->data;
 
 	if (!data->is.KnownSize())
@@ -128,7 +128,7 @@ mpc_to_mpd_sample(MPC_SAMPLE_FORMAT sample)
 }
 
 static void
-mpc_to_mpd_buffer(MpcdecSampleTraits::pointer_type dest,
+mpc_to_mpd_buffer(MpcdecSampleTraits::pointer dest,
 		  const MPC_SAMPLE_FORMAT *src,
 		  unsigned num_samples)
 {

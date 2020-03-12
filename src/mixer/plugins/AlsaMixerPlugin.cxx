@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -86,7 +86,7 @@ public:
 		:Mixer(alsa_mixer_plugin, _listener),
 		 event_loop(_event_loop) {}
 
-	virtual ~AlsaMixer();
+	~AlsaMixer() override;
 
 	void Configure(const ConfigBlock &block);
 	void Setup();
@@ -177,7 +177,7 @@ alsa_mixer_init(EventLoop &event_loop, gcc_unused AudioOutput &ao,
 		MixerListener &listener,
 		const ConfigBlock &block)
 {
-	AlsaMixer *am = new AlsaMixer(event_loop, listener);
+	auto *am = new AlsaMixer(event_loop, listener);
 	am->Configure(block);
 
 	return am;

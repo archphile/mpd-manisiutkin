@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #define MPD_OUTPUT_CONTROL_HXX
 
 #include "Source.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "thread/Thread.hxx"
 #include "thread/Mutex.hxx"
 #include "thread/Cond.hxx"
@@ -48,6 +48,13 @@ class AudioOutputClient;
  */
 class AudioOutputControl {
 	std::unique_ptr<FilteredAudioOutput> output;
+
+	/**
+	 * A copy of FilteredAudioOutput::name which we need just in
+	 * case this is a "dummy" output (output==nullptr) because
+	 * this output has been moved to another partitioncommands.
+	 */
+	const std::string name;
 
 	/**
 	 * The PlayerControl object which "owns" this output.  This
@@ -212,6 +219,15 @@ class AudioOutputControl {
 	 */
 	bool skip_delay;
 
+	/**
+	 * Has Command::KILL already been sent?  This field is only
+	 * defined if `thread` is defined.  It shall avoid sending the
+	 * command twice.
+	 *
+	 * Protected by #mutex.
+	 */
+	bool killed;
+
 public:
 	/**
 	 * This mutex protects #open, #fail_timer, #pipe.
@@ -246,6 +262,10 @@ public:
 
 	gcc_pure
 	Mixer *GetMixer() const noexcept;
+
+	bool IsDummy() const noexcept {
+		return !output;
+	}
 
 	/**
 	 * Caller must lock the mutex.
@@ -284,6 +304,14 @@ public:
 	const std::exception_ptr &GetLastError() const noexcept {
 		return last_error;
 	}
+
+	/**
+	 * Detach and return the #FilteredAudioOutput instance and,
+	 * replacing it here with a "dummy" object.
+	 */
+	std::unique_ptr<FilteredAudioOutput> Steal() noexcept;
+	void ReplaceDummy(std::unique_ptr<FilteredAudioOutput> new_output,
+			  bool _enabled) noexcept;
 
 	void StartThread();
 
@@ -329,7 +357,7 @@ public:
 
 	void BeginDestroy() noexcept;
 
-	const std::map<std::string, std::string> GetAttributes() const noexcept;
+	std::map<std::string, std::string> GetAttributes() const noexcept;
 	void SetAttribute(std::string &&name, std::string &&value);
 
 	/**
@@ -556,6 +584,8 @@ private:
 	 * Handles exceptions.
 	 */
 	void InternalDrain() noexcept;
+
+	void StopThread() noexcept;
 
 	/**
 	 * The OutputThread.

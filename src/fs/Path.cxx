@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ Path::ToUTF8Throw() const
 	return ::PathToUTF8(c_str());
 }
 
-Path::const_pointer_type
+Path::const_pointer
 Path::GetSuffix() const noexcept
 {
 	const auto base = GetBase().c_str();

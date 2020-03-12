@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -87,8 +87,6 @@ Song::UpdateFile(Storage &storage)
 	return true;
 }
 
-#endif
-
 #ifdef ENABLE_ARCHIVE
 
 SongPtr
@@ -129,6 +127,8 @@ Song::UpdateFileInArchive(ArchiveFile &archive) noexcept
 }
 
 #endif
+
+#endif /* ENABLE_DATABASE */
 
 bool
 DetachedSong::LoadFile(Path path)

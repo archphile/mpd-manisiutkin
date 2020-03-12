@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@
 #include "tag/Handler.hxx"
 #include "tag/Generic.hxx"
 #include "fs/Path.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/StringBuffer.hxx"
 #include "util/StringView.hxx"
@@ -108,7 +108,7 @@ try {
 	const ScopeDecoderPluginsInit decoder_plugins_init({});
 
 	plugin = decoder_plugin_from_name(decoder_name);
-	if (plugin == NULL) {
+	if (plugin == nullptr) {
 		fprintf(stderr, "No such decoder: %s\n", decoder_name);
 		return EXIT_FAILURE;
 	}
@@ -125,7 +125,7 @@ try {
 	Mutex mutex;
 	InputStreamPtr is;
 
-	if (!success && plugin->scan_stream != NULL) {
+	if (!success && plugin->scan_stream != nullptr) {
 		is = InputStream::OpenReady(path.c_str(), mutex);
 		success = plugin->ScanStream(*is, h);
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -105,7 +105,9 @@ public:
 			     BIND_THIS_METHOD(OnDeferredStart)),
 		 request(curl, uri, *this) {
 		// TODO: use CurlInputStream's configuration
+	}
 
+	void DeferStart() noexcept {
 		/* start the transfer inside the IOThread */
 		defer_start.Schedule();
 	}
@@ -259,8 +261,8 @@ public:
 		 CommonExpatParser(ExpatNamespaceSeparator{'|'})
 	{
 		request.SetOption(CURLOPT_CUSTOMREQUEST, "PROPFIND");
-		request.SetOption(CURLOPT_FOLLOWLOCATION, 1l);
-		request.SetOption(CURLOPT_MAXREDIRS, 1l);
+		request.SetOption(CURLOPT_FOLLOWLOCATION, 1L);
+		request.SetOption(CURLOPT_MAXREDIRS, 1L);
 
 		request_headers.Append(StringFormat<40>("depth: %u", depth));
 
@@ -278,6 +280,7 @@ public:
 	}
 
 	using BlockingHttpRequest::GetEasy;
+	using BlockingHttpRequest::DeferStart;
 	using BlockingHttpRequest::Wait;
 
 protected:
@@ -425,6 +428,7 @@ public:
 	}
 
 	const StorageFileInfo &Perform() {
+		DeferStart();
 		Wait();
 		return info;
 	}
@@ -476,6 +480,7 @@ public:
 		 base_path(UriPathOrSlash(uri)) {}
 
 	std::unique_ptr<StorageDirectoryReader> Perform() {
+		DeferStart();
 		Wait();
 		return ToReader();
 	}

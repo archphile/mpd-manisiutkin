@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,10 +47,13 @@ OggSeekPageAtOffset(OggSyncState &oy, ogg_stream_state &os, InputStream &is,
  * Try to find the end-of-stream (EOS) packet.  Seek to the end of the
  * file if necessary.
  *
+ * @param synced is the #OggSyncState currently synced?  If not, then
+ * we need to use ogg_sync_pageseek() instead of ogg_sync_pageout(),
+ * which is more expensive
  * @return true if the EOS packet was found
  */
 bool
 OggSeekFindEOS(OggSyncState &oy, ogg_stream_state &os, ogg_packet &packet,
-	       InputStream &is);
+	       InputStream &is, bool synced=true);
 
 #endif

@@ -62,16 +62,16 @@ In any case, you need:
 Each plugin usually needs a codec library, which you also need to
 install. Check the :doc:`plugins` for details about required libraries
 
-For example, the following installs a fairly complete list of build dependencies on Debian Jessie:
+For example, the following installs a fairly complete list of build dependencies on Debian Buster:
 
 .. code-block:: none
 
-    apt install g++ \
+    apt install meson g++ \
       libpcre3-dev \
       libmad0-dev libmpg123-dev libid3tag0-dev \
-      libflac-dev libvorbis-dev libopus-dev \
+      libflac-dev libvorbis-dev libopus-dev libogg-dev \
       libadplug-dev libaudiofile-dev libsndfile1-dev libfaad-dev \
-      libfluidsynth-dev libgme-dev libmikmod2-dev libmodplug-dev \
+      libfluidsynth-dev libgme-dev libmikmod-dev libmodplug-dev \
       libmpcdec-dev libwavpack-dev libwildmidi-dev \
       libsidplay2-dev libsidutils-dev libresid-builder-dev \
       libavcodec-dev libavformat-dev \
@@ -91,7 +91,9 @@ For example, the following installs a fairly complete list of build dependencies
       libsystemd-dev \
       libgtest-dev \
       libboost-dev \
-      libicu-dev
+      libicu-dev \
+      libchromaprint-dev \
+      libgcrypt20-dev
       
 
 Now configure the source tree:
@@ -182,47 +184,6 @@ Android SDK; :envvar:`NDK_PATH` is the Android NDK installation path;
 ABI is the Android ABI to be built, e.g. ":code:`arm64-v8a`".
 
 This downloads various library sources, and then configures and builds :program:`MPD`. 
-
-systemd socket activation
--------------------------
-
-Using systemd, you can launch :program:`MPD` on demand when the first client attempts to connect.
-
-:program:`MPD` comes with two systemd unit files: a "service" unit and
-a "socket" unit.  These will be installed to the directory specified
-with :code:`-Dsystemd_system_unit_dir=...`,
-e.g. :file:`/lib/systemd/system`.
-
-To enable socket activation, type:
-
-.. code-block:: none
-
-    systemctl enable mpd.socket
-    systemctl start mpd.socket
-
-In this configuration, :program:`MPD` will ignore the :ref:`listener
-settings <listeners>` (``bind_to_address`` and ``port``).
-
-systemd user unit
------------------
-
-You can launch :program:`MPD` as a systemd user unit.  These will be
-installed to the directory specified with
-:code:`-Dsystemd_user_unit_dir=...`,
-e.g. :file:`/usr/lib/systemd/user` or
-:file:`$HOME/.local/share/systemd/user`.
-
-Once the user unit is installed, you can start and stop :program:`MPD` like any other service:
-
-.. code-block:: none
-
-    systemctl --user start mpd
-
-To auto-start :program:`MPD` upon login, type:
-
-.. code-block:: none
-
-    systemctl --user enable mpd
 
 Configuration
 *************
@@ -334,6 +295,8 @@ The following table lists the input options valid for all plugins:
 
 More information can be found in the :ref:`input_plugins` reference.
 
+.. _input_cache:
+
 Configuring the Input Cache
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -365,6 +328,9 @@ configuration file:
 
 This allocates a cache of 1 GB.  If the cache grows larger than that,
 older files will be evicted.
+
+You flush the cache at any time by sending ``SIGHUP`` to the
+:program:`MPD` process, see :ref:`signals`.
 
 
 Configuring decoder plugins
@@ -845,6 +811,89 @@ The CLS column shows the CPU scheduler; TS is the normal scheduler; FF and RR ar
 
 Using MPD
 *********
+
+Starting and Stopping MPD
+-------------------------
+
+The simplest (but not the best) way to start :program:`MPD` is to
+simply type::
+
+ mpd
+
+This will start :program:`MPD` as a daemon process (which means it
+detaches from your terminal and continues to run in background).  To
+stop it, send ``SIGTERM`` to the process; if you have configured a
+``pid_file``, you can use the ``--kill`` option::
+
+ mpd --kill
+
+The best way to manage :program:`MPD` processes is to use a service
+manager such as :program:`systemd`.
+
+systemd
+^^^^^^^
+
+:program:`MPD` ships with :program:`systemd` service units.
+
+If you have installed :program:`MPD` with your operating system's
+package manager, these are probably preinstalled, so you can start and
+stop :program:`MPD` this way (like any other service)::
+
+ systemctl start mpd
+ systemctl stop mpd
+
+systemd socket activation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Using systemd, you can launch :program:`MPD` on demand when the first client attempts to connect.
+
+:program:`MPD` comes with two systemd unit files: a "service" unit and
+a "socket" unit.  These will be installed to the directory specified
+with :code:`-Dsystemd_system_unit_dir=...`,
+e.g. :file:`/lib/systemd/system`.
+
+To enable socket activation, type:
+
+.. code-block:: none
+
+    systemctl enable mpd.socket
+    systemctl start mpd.socket
+
+In this configuration, :program:`MPD` will ignore the :ref:`listener
+settings <listeners>` (``bind_to_address`` and ``port``).
+
+systemd user unit
+^^^^^^^^^^^^^^^^^
+
+You can launch :program:`MPD` as a systemd user unit.  These will be
+installed to the directory specified with
+:code:`-Dsystemd_user_unit_dir=...`,
+e.g. :file:`/usr/lib/systemd/user` or
+:file:`$HOME/.local/share/systemd/user`.
+
+Once the user unit is installed, you can start and stop :program:`MPD` like any other service:
+
+.. code-block:: none
+
+    systemctl --user start mpd
+
+To auto-start :program:`MPD` upon login, type:
+
+.. code-block:: none
+
+    systemctl --user enable mpd
+
+.. _signals:
+
+Signals
+-------
+
+:program:`MPD` understands the following UNIX signals:
+
+- ``SIGTERM``, ``SIGINT``: shut down MPD
+- ``SIGHUP``: reopen log files (send this after log rotation) and
+  flush caches (see :ref:`input_cache`)
+
 
 The client
 ----------

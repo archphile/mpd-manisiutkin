@@ -283,6 +283,7 @@ The following tags are supported by :program:`MPD`:
 * **date**: the song's release date. This is usually a 4-digit year.
 * **composer**: the artist who composed the song.
 * **performer**: the artist who performed the song.
+* **conductor**: the conductor who conducted the song.
 * **work**: `"a work is a distinct intellectual or artistic creation,
   which can be expressed in the form of one or more audio recordings" <https://musicbrainz.org/doc/Work>`_
 * **grouping**: "used if the sound belongs to a larger category of
@@ -438,6 +439,8 @@ Querying :program:`MPD`'s status
     Reports the current status of the player and the volume
     level.
 
+    - ``partition``: the name of the current partition (see
+      :ref:`partition_commands`)
     - ``volume``: ``0-100`` (deprecated: ``-1`` if the volume cannot
       be determined)
     - ``repeat``: ``0`` or ``1``
@@ -1237,6 +1240,8 @@ Connection settings
     Announce that this client is interested in all tag
     types.  This is the default setting for new clients.
 
+.. _partition_commands:
+
 Partition commands
 ==================
 
@@ -1256,6 +1261,13 @@ client is assigned to one partition at a time.
 
 :command:`newpartition {NAME}`
     Create a new partition.
+
+:command:`delpartition {NAME}`
+    Delete a partition.  The partition must be empty (no connected
+    clients and no outputs).
+
+:command:`moveoutput {OUTPUTNAME}`
+    Move an output to the current partition.
 
 Audio output devices
 ====================
@@ -1345,6 +1357,9 @@ additional services.
 
 New messages are indicated by the ``message``
 idle event.
+
+If your MPD instance has multiple partitions, note that
+client-to-client messages are local to the current partition.
 
 :command:`subscribe {NAME}`
     Subscribe to a channel.  The channel is created if it

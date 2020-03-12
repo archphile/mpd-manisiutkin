@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -373,7 +373,7 @@ template<SampleFormat F, class Traits=SampleTraits<F>>
 static void
 TestAlsaChannelOrder51()
 {
-	typedef typename Traits::value_type value_type;
+	using value_type = typename Traits::value_type;
 
 	static constexpr value_type src[] = {
 		0, 1, 2, 3, 4, 5,
@@ -403,7 +403,7 @@ template<SampleFormat F, class Traits=SampleTraits<F>>
 static void
 TestAlsaChannelOrder71()
 {
-	typedef typename Traits::value_type value_type;
+	using value_type = typename Traits::value_type;
 
 	static constexpr value_type src[] = {
 		0, 1, 2, 3, 4, 5, 6, 7,

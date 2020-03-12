@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,7 @@
 
 static std::string fs_charset;
 
-static IcuConverter *fs_converter;
+static std::unique_ptr<IcuConverter> fs_converter;
 
 void
 SetFSCharset(const char *charset)
@@ -59,8 +59,7 @@ void
 DeinitFSCharset() noexcept
 {
 #ifdef HAVE_ICU_CONVERTER
-	delete fs_converter;
-	fs_converter = nullptr;
+	fs_converter.reset();
 #endif
 }
 
@@ -92,7 +91,7 @@ FixSeparators(PathTraitsUTF8::string &&s)
 }
 
 PathTraitsUTF8::string
-PathToUTF8(PathTraitsFS::const_pointer_type path_fs)
+PathToUTF8(PathTraitsFS::const_pointer path_fs)
 {
 #if !CLANG_CHECK_VERSION(3,6)
 	/* disabled on clang due to -Wtautological-pointer-compare */
@@ -118,7 +117,7 @@ PathToUTF8(PathTraitsFS::const_pointer_type path_fs)
 #if defined(HAVE_FS_CHARSET) || defined(_WIN32)
 
 PathTraitsFS::string
-PathFromUTF8(PathTraitsUTF8::const_pointer_type path_utf8)
+PathFromUTF8(PathTraitsUTF8::const_pointer path_utf8)
 {
 #if !CLANG_CHECK_VERSION(3,6)
 	/* disabled on clang due to -Wtautological-pointer-compare */

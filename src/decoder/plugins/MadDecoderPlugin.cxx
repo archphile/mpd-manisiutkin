@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #include "tag/Handler.hxx"
 #include "tag/ReplayGain.hxx"
 #include "tag/MixRamp.hxx"
-#include "CheckAudioFormat.hxx"
+#include "pcm/CheckAudioFormat.hxx"
 #include "util/Clamp.hxx"
 #include "util/StringCompare.hxx"
 #include "util/Domain.hxx"
@@ -516,8 +516,8 @@ parse_xing(struct xing *xing, struct mad_bitptr *ptr, int *oldbitlen) noexcept
 	if (xing->flags & XING_TOC) {
 		if (bitlen < 800)
 			return false;
-		for (unsigned i = 0; i < 100; ++i)
-			xing->toc[i] = mad_bit_read(ptr, 8);
+		for (unsigned char & i : xing->toc)
+			i = mad_bit_read(ptr, 8);
 		bitlen -= 800;
 	}
 
@@ -686,6 +686,11 @@ MadDecoder::DecodeFirstFrame(Tag *tag) noexcept
 {
 	struct xing xing;
 
+#if GCC_CHECK_VERSION(10,0)
+	/* work around bogus -Wuninitialized in GCC 10 */
+	xing.frames = 0;
+#endif
+
 	while (true) {
 		const auto action = DecodeNextFrame(false, tag);
 		switch (action) {
@@ -755,7 +760,7 @@ MadDecoder::DecodeFirstFrame(Tag *tag) noexcept
 
 	if (max_frames > 8 * 1024 * 1024) {
 		FormatWarning(mad_domain,
-			      "mp3 file header indicates too many frames: %lu",
+			      "mp3 file header indicates too many frames: %zu",
 			      max_frames);
 		return false;
 	}

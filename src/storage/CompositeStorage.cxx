@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -117,7 +117,7 @@ CompositeStorage::Directory::Make(const char *uri)
 {
 	Directory *directory = this;
 	while (*uri != 0) {
-		const std::string name = NextSegment(uri);
+		auto name = NextSegment(uri);
 		auto i = directory->children.emplace(std::move(name),
 						     Directory());
 		directory = &i.first->second;
@@ -181,11 +181,14 @@ CompositeStorage::Directory::MapToRelativeUTF8(std::string &buffer,
 
 CompositeStorage::CompositeStorage() noexcept
 {
+	/* note: no "=default" here because members of this class are
+	   allowed to throw during construction according to the C++
+	   standard (e.g. std::map), but we choose to ignore these
+	   exceptions; if construction of std::map goes wrong, MPD has
+	   no chance to work at all, so it's ok to std::terminate() */
 }
 
-CompositeStorage::~CompositeStorage()
-{
-}
+CompositeStorage::~CompositeStorage() = default;
 
 Storage *
 CompositeStorage::GetMount(const char *uri) noexcept

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,6 @@
 #include "Partition.hxx"
 #include "Instance.hxx"
 #include "IdleFlags.hxx"
-#include "AudioFormat.hxx"
 #include "util/StringBuffer.hxx"
 #include "util/ScopeExit.hxx"
 #include "util/Exception.hxx"
@@ -109,7 +108,8 @@ handle_pause(Client &client, Request args, gcc_unused Response &r)
 CommandResult
 handle_status(Client &client, gcc_unused Request args, Response &r)
 {
-	auto &pc = client.GetPlayerControl();
+	auto &partition = client.GetPartition();
+	auto &pc = partition.pc;
 
 	const char *state = nullptr;
 	int song;
@@ -128,9 +128,9 @@ handle_status(Client &client, gcc_unused Request args, Response &r)
 		break;
 	}
 
-	const playlist &playlist = client.GetPlaylist();
+	const auto &playlist = partition.playlist;
 
-	const auto volume = volume_level_get(client.GetPartition().outputs);
+	const auto volume = volume_level_get(partition.outputs);
 	if (volume >= 0)
 		r.Format("volume: %i\n", volume);
 
@@ -138,6 +138,7 @@ handle_status(Client &client, gcc_unused Request args, Response &r)
 		 COMMAND_STATUS_RANDOM ": %i\n"
 		 COMMAND_STATUS_SINGLE ": %s\n"
 		 COMMAND_STATUS_CONSUME ": %i\n"
+		 "partition: %s\n"
 		 COMMAND_STATUS_PLAYLIST ": %li\n"
 		 COMMAND_STATUS_PLAYLIST_LENGTH ": %i\n"
 		 COMMAND_STATUS_MIXRAMPDB ": %f\n"
@@ -146,6 +147,7 @@ handle_status(Client &client, gcc_unused Request args, Response &r)
 		 playlist.GetRandom(),
 		 SingleToString(playlist.GetSingle()),
 		 playlist.GetConsume(),
+		 partition.name.c_str(),
 		 (unsigned long)playlist.GetVersion(),
 		 playlist.GetLength(),
 		 pc.GetMixRampDb(),
@@ -172,7 +174,7 @@ handle_status(Client &client, gcc_unused Request args, Response &r)
 			 COMMAND_STATUS_BITRATE ": %u\n",
 			 player_status.elapsed_time.RoundS(),
 			 player_status.total_time.IsNegative()
-			 ? 0u
+			 ? 0U
 			 : unsigned(player_status.total_time.RoundS()),
 			 player_status.elapsed_time.ToDoubleS(),
 			 player_status.bit_rate);
@@ -187,7 +189,7 @@ handle_status(Client &client, gcc_unused Request args, Response &r)
 	}
 
 #ifdef ENABLE_DATABASE
-	const UpdateService *update_service = client.GetInstance().update;
+	const UpdateService *update_service = partition.instance.update;
 	unsigned updateJobId = update_service != nullptr
 		? update_service->GetId()
 		: 0;

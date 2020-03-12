@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include "ShineEncoderPlugin.hxx"
 #include "../EncoderAPI.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 #include "util/RuntimeError.hxx"
 
@@ -86,7 +86,7 @@ class PreparedShineEncoder final : public PreparedEncoder {
 	shine_config_t config;
 
 public:
-	PreparedShineEncoder(const ConfigBlock &block);
+	explicit PreparedShineEncoder(const ConfigBlock &block);
 
 	/* virtual methods from class PreparedEncoder */
 	Encoder *Open(AudioFormat &audio_format) override;
@@ -167,7 +167,7 @@ ShineEncoder::WriteChunk(bool flush)
 void
 ShineEncoder::Write(const void *_data, size_t length)
 {
-	const int16_t *data = (const int16_t*)_data;
+	const auto *data = (const int16_t*)_data;
 	length /= sizeof(*data) * audio_format.channels;
 	size_t written = 0;
 

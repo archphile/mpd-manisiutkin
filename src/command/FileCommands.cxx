@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@
 
 gcc_pure
 static bool
-SkipNameFS(PathTraitsFS::const_pointer_type name_fs) noexcept
+SkipNameFS(PathTraitsFS::const_pointer name_fs) noexcept
 {
 	return name_fs[0] == '.' &&
 		(name_fs[1] == 0 ||
@@ -201,7 +201,12 @@ read_stream_art(Response &r, const char *uri, size_t offset)
 
 	InputStreamPtr is = find_stream_art(art_directory.c_str(), mutex);
 
-	if (is == nullptr) {
+        if (is == nullptr) {
+                art_directory = PathTraitsUTF8::GetParent(art_directory.c_str());
+                is = find_stream_art(art_directory.c_str(), mutex);
+        }
+
+        if (is == nullptr) {
 		r.Error(ACK_ERROR_NO_EXIST, "No file exists");
 		return CommandResult::ERROR;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * Copyright (C) 2010-2011 Philipp 'ph3-der-loewe' Schafft
  * Copyright (C) 2010-2011 Hans-Kristian 'maister' Arntzen
  * Copyright (C) 2014-2015 François 'mmu_man' Revol
@@ -36,14 +36,14 @@ public:
 		 self(_output) {}
 
 	/* virtual methods from class Mixer */
-	virtual void Open() override {
+	void Open() override {
 	}
 
 	void Close() noexcept override {
 	}
 
-	virtual int GetVolume() override;
-	virtual void SetVolume(unsigned volume) override;
+	int GetVolume() override;
+	void SetVolume(unsigned volume) override;
 };
 
 static Mixer *

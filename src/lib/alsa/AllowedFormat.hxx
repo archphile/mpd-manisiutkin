@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #ifndef MPD_ALSA_ALLOWED_FORMAT_HXX
 #define MPD_ALSA_ALLOWED_FORMAT_HXX
 
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "config.h"
 
 #include <forward_list>

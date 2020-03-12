@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -480,7 +480,7 @@ DecoderBridge::SubmitData(InputStream *is,
 	if (dc.end_time.IsPositive()) {
 		/* enforce the given end time */
 
-		const uint64_t end_frame =
+		const auto end_frame =
 			dc.end_time.ToScale<uint64_t>(dc.in_audio_format.sample_rate);
 		if (absolute_frame >= end_frame)
 			return DecoderCommand::STOP;

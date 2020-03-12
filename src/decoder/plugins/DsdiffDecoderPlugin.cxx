@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,8 +30,8 @@
 #include "DsdiffDecoderPlugin.hxx"
 #include "../DecoderAPI.hxx"
 #include "input/InputStream.hxx"
-#include "CheckAudioFormat.hxx"
-#include "util/bit_reverse.h"
+#include "pcm/CheckAudioFormat.hxx"
+#include "util/BitReverse.hxx"
 #include "util/ByteOrder.hxx"
 #include "util/StringView.hxx"
 #include "tag/Handler.hxx"
@@ -213,7 +213,6 @@ dsdiff_handle_native_tag(DecoderClient *client, InputStream &is,
 		return;
 
 	handler.OnTag(type, {label, length});
-	return;
 }
 
 /**

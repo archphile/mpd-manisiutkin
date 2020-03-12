@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -83,7 +83,7 @@ Directory::CreateChild(const char *name_utf8) noexcept
 		? std::string(name_utf8)
 		: PathTraitsUTF8::Build(GetPath(), name_utf8);
 
-	Directory *child = new Directory(std::move(path_utf8), this);
+	auto *child = new Directory(std::move(path_utf8), this);
 	children.push_back(*child);
 	return child;
 }
@@ -220,8 +220,8 @@ Directory::Sort() noexcept
 
 void
 Directory::Walk(bool recursive, const SongFilter *filter,
-		VisitDirectory visit_directory, VisitSong visit_song,
-		VisitPlaylist visit_playlist) const
+		const VisitDirectory& visit_directory, const VisitSong& visit_song,
+		const VisitPlaylist& visit_playlist) const
 {
 	if (IsMount()) {
 		assert(IsEmpty());

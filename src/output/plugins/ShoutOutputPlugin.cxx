@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,7 @@ struct ShoutOutput final : AudioOutput {
 	uint8_t buffer[32768];
 
 	explicit ShoutOutput(const ConfigBlock &block);
-	~ShoutOutput();
+	~ShoutOutput() override;
 
 	static AudioOutput *Create(EventLoop &event_loop,
 				   const ConfigBlock &block);
@@ -99,7 +99,7 @@ ShoutOutput::ShoutOutput(const ConfigBlock &block)
 {
 	const char *host = require_block_string(block, "host");
 	const char *mount = require_block_string(block, "mount");
-	unsigned port = block.GetBlockValue("port", 0u);
+	unsigned port = block.GetBlockValue("port", 0U);
 	if (port == 0)
 		throw std::runtime_error("shout port must be configured");
 
@@ -381,6 +381,7 @@ ShoutOutput::SendTag(const Tag &tag)
 		shout_tag_to_metadata(tag, song, sizeof(song));
 
 		shout_metadata_add(meta, "song", song);
+		shout_metadata_add(meta, "charset", "UTF-8");
 		if (SHOUTERR_SUCCESS != shout_set_metadata(shout_conn, meta)) {
 			LogWarning(shout_output_domain,
 				   "error setting shout metadata");

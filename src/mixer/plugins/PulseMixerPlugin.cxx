@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,7 @@ public:
 	{
 	}
 
-	virtual ~PulseMixer();
+	~PulseMixer() override;
 
 	void Offline();
 	void VolumeCallback(const pa_sink_input_info *i, int eol);
@@ -108,7 +108,7 @@ static void
 pulse_mixer_volume_cb(gcc_unused pa_context *context, const pa_sink_input_info *i,
 		      int eol, void *userdata)
 {
-	PulseMixer *pm = (PulseMixer *)userdata;
+	auto *pm = (PulseMixer *)userdata;
 	pm->VolumeCallback(i, eol);
 }
 
@@ -187,9 +187,9 @@ pulse_mixer_init(gcc_unused EventLoop &event_loop, AudioOutput &ao,
 		 MixerListener &listener,
 		 const ConfigBlock &block)
 {
-	PulseOutput &po = (PulseOutput &)ao;
+	auto &po = (PulseOutput &)ao;
 	float scale = parse_volume_scale_factor(block.GetBlockValue("scale_volume"));
-	PulseMixer *pm = new PulseMixer(po, listener, scale);
+	auto *pm = new PulseMixer(po, listener, scale);
 
 	pulse_output_set_mixer(po, *pm);
 

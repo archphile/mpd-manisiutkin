@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,20 +17,15 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef MPD_BIT_REVERSE_H
-#define MPD_BIT_REVERSE_H
+#include "BitReverse.hxx"
 
-#include "Compiler.h"
-
-#include <stdint.h>
-
-extern const uint8_t bit_reverse_table[256];
-
-gcc_const
-static inline uint8_t
-bit_reverse(uint8_t x)
+static constexpr BitReverseTable
+GenerateBitReverseTable() noexcept
 {
-	return bit_reverse_table[x];
+	BitReverseTable table{};
+	for (unsigned i = 0; i < 256; ++i)
+		table.data[i] = BitReverseMultiplyModulus(i);
+	return table;
 }
 
-#endif
+const BitReverseTable bit_reverse_table = GenerateBitReverseTable();

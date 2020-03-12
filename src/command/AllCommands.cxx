@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -103,6 +103,7 @@ static constexpr struct command commands[] = {
 	{ "decoders", PERMISSION_READ, 0, 0, handle_decoders },
 	{ "delete", PERMISSION_CONTROL, 1, 1, handle_delete },
 	{ "deleteid", PERMISSION_CONTROL, 1, 1, handle_deleteid },
+	{ "delpartition", PERMISSION_ADMIN, 1, 1, handle_delpartition },
 	{ "disableoutput", PERMISSION_ADMIN, 1, 1, handle_disableoutput },
 	{ "enableoutput", PERMISSION_ADMIN, 1, 1, handle_enableoutput },
 #ifdef ENABLE_DATABASE
@@ -139,6 +140,7 @@ static constexpr struct command commands[] = {
 #endif
 	{ "move", PERMISSION_CONTROL, 2, 2, handle_move },
 	{ "moveid", PERMISSION_CONTROL, 2, 2, handle_moveid },
+	{ "moveoutput", PERMISSION_ADMIN, 1, 1, handle_moveoutput },
 	{ "newpartition", PERMISSION_ADMIN, 1, 1, handle_newpartition },
 	{ "next", PERMISSION_CONTROL, 0, 0, handle_next },
 	{ "notcommands", PERMISSION_NONE, 0, 0, handle_not_commands },
@@ -244,8 +246,8 @@ static CommandResult
 PrintAvailableCommands(Response &r, const Partition &partition,
 		     unsigned permission) noexcept
 {
-	for (unsigned i = 0; i < num_commands; ++i) {
-		const struct command *cmd = &commands[i];
+	for (const auto & i : commands) {
+		const struct command *cmd = &i;
 
 		if (cmd->permission == (permission & cmd->permission) &&
 		    command_available(partition, cmd))
@@ -258,8 +260,8 @@ PrintAvailableCommands(Response &r, const Partition &partition,
 static CommandResult
 PrintUnavailableCommands(Response &r, unsigned permission) noexcept
 {
-	for (unsigned i = 0; i < num_commands; ++i) {
-		const struct command *cmd = &commands[i];
+	for (const auto & i : commands) {
+		const struct command *cmd = &i;
 
 		if (cmd->permission != (permission & cmd->permission))
 			r.Format("command: %s\n", cmd->cmd);

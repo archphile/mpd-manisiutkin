@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "AudioFormat.hxx"
-#include "AudioParser.hxx"
+#include "pcm/AudioFormat.hxx"
+#include "pcm/AudioParser.hxx"
 #include "util/StringBuffer.hxx"
 
 #include <gtest/gtest.h>

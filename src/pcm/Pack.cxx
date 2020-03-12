@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
 static void
 pack_sample(uint8_t *dest, const int32_t *src0) noexcept
 {
-	const uint8_t *src = (const uint8_t *)src0;
+	const auto *src = (const uint8_t *)src0;
 
 	if (IsBigEndian())
 		++src;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ static constexpr Domain hybrid_dsd_domain("hybrid_dsd");
 
 namespace {
 
-static bool
+bool
 InitHybridDsdDecoder(const ConfigBlock &block)
 {
 	/* this plugin is disabled by default because for people
@@ -186,7 +186,7 @@ HybridDsdDecode(DecoderClient &client, InputStream &input)
 		client.Ready(result.first, true, duration);
 		frame_size = result.first.GetFrameSize();
 		kbit_rate = frame_size * result.first.sample_rate /
-			(1024u / 8u);
+			(1024U / 8U);
 		total_frames = result.second / frame_size;
 	} catch (UnsupportedFile) {
 		/* not a Hybrid-DSD file; let the next decoder plugin
@@ -236,7 +236,7 @@ HybridDsdDecode(DecoderClient &client, InputStream &input)
 		/* fill the buffer */
 		auto w = buffer.Write();
 		if (!w.empty()) {
-			if (remaining_bytes < (1<<30ull) &&
+			if (remaining_bytes < (1<<30ULL) &&
 			    w.size > size_t(remaining_bytes))
 				w.size = remaining_bytes;
 

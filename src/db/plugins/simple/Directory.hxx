@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -284,8 +284,8 @@ public:
 	 * Caller must lock #db_mutex.
 	 */
 	void Walk(bool recursive, const SongFilter *match,
-		  VisitDirectory visit_directory, VisitSong visit_song,
-		  VisitPlaylist visit_playlist) const;
+		  const VisitDirectory& visit_directory, const VisitSong& visit_song,
+		  const VisitPlaylist& visit_playlist) const;
 
 	gcc_pure
 	LightDirectory Export() const noexcept;

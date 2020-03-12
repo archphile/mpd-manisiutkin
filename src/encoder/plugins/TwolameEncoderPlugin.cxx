@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include "TwolameEncoderPlugin.hxx"
 #include "../EncoderAPI.hxx"
-#include "AudioFormat.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "util/NumberParser.hxx"
 #include "util/RuntimeError.hxx"
 #include "util/Domain.hxx"
@@ -73,7 +73,7 @@ class PreparedTwolameEncoder final : public PreparedEncoder {
 	int bitrate;
 
 public:
-	PreparedTwolameEncoder(const ConfigBlock &block);
+	explicit PreparedTwolameEncoder(const ConfigBlock &block);
 
 	/* virtual methods from class PreparedEncoder */
 	Encoder *Open(AudioFormat &audio_format) override;
@@ -186,7 +186,7 @@ TwolameEncoder::~TwolameEncoder() noexcept
 void
 TwolameEncoder::Write(const void *data, size_t length)
 {
-	const int16_t *src = (const int16_t*)data;
+	const auto *src = (const int16_t*)data;
 
 	assert(output_buffer_position == output_buffer_length);
 

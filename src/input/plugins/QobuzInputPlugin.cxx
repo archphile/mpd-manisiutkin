@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -53,7 +53,7 @@ public:
 		qobuz_client->AddLoginHandler(*this);
 	}
 
-	~QobuzInputStream() {
+	~QobuzInputStream() override {
 		qobuz_client->RemoveLoginHandler(*this);
 	}
 
@@ -65,7 +65,7 @@ public:
 	}
 
 private:
-	void Failed(std::exception_ptr e) {
+	void Failed(const std::exception_ptr& e) {
 		SetInput(std::make_unique<FailingInputStream>(GetURI(), e,
 							      mutex));
 	}

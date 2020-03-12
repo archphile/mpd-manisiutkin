@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -68,7 +68,7 @@ static void XMLCALL
 xspf_start_element(void *user_data, const XML_Char *element_name,
 		   gcc_unused const XML_Char **atts)
 {
-	XspfParser *parser = (XspfParser *)user_data;
+	auto *parser = (XspfParser *)user_data;
 
 	switch (parser->state) {
 	case XspfParser::ROOT:
@@ -118,7 +118,7 @@ xspf_start_element(void *user_data, const XML_Char *element_name,
 static void XMLCALL
 xspf_end_element(void *user_data, const XML_Char *element_name)
 {
-	XspfParser *parser = (XspfParser *)user_data;
+	auto *parser = (XspfParser *)user_data;
 
 	switch (parser->state) {
 	case XspfParser::ROOT:
@@ -157,7 +157,7 @@ xspf_end_element(void *user_data, const XML_Char *element_name)
 static void XMLCALL
 xspf_char_data(void *user_data, const XML_Char *s, int len)
 {
-	XspfParser *parser = (XspfParser *)user_data;
+	auto *parser = (XspfParser *)user_data;
 
 	switch (parser->state) {
 	case XspfParser::ROOT:

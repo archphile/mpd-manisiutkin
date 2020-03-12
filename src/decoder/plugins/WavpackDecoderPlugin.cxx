@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #include "WavpackDecoderPlugin.hxx"
 #include "../DecoderAPI.hxx"
 #include "input/InputStream.hxx"
-#include "CheckAudioFormat.hxx"
+#include "pcm/CheckAudioFormat.hxx"
 #include "tag/Handler.hxx"
 #include "fs/Path.hxx"
 #include "util/Alloc.hxx"
@@ -127,7 +127,7 @@ template<typename T>
 static void
 format_samples_int(void *buffer, uint32_t count)
 {
-	int32_t *src = (int32_t *)buffer;
+	auto *src = (int32_t *)buffer;
 	T *dst = (T *)buffer;
 	/*
 	 * The asserts like the following one are because we do the
@@ -368,7 +368,7 @@ wavpack_input_read_bytes(void *id, void *data, int32_t bcount)
 int32_t
 WavpackInput::ReadBytes(void *data, size_t bcount)
 {
-	uint8_t *buf = (uint8_t *)data;
+	auto *buf = (uint8_t *)data;
 	int32_t i = 0;
 
 	if (last_byte != EOF) {
@@ -544,7 +544,7 @@ wavpack_streamdecode(DecoderClient &client, InputStream &is)
 		open_flags |= OPEN_WVC;
 		can_seek &= is_wvc->IsSeekable();
 
-		wvc.reset(new WavpackInput(&client, *is_wvc));
+		wvc = std::make_unique<WavpackInput>(&client, *is_wvc);
 	}
 
 	if (!can_seek) {

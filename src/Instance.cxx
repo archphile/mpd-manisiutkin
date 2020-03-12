@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include "Instance.hxx"
 #include "Partition.hxx"
 #include "IdleFlags.hxx"
+#include "StateFile.hxx"
 #include "Stats.hxx"
 #include "client/List.hxx"
 #include "input/cache/Manager.hxx"
@@ -69,6 +70,13 @@ Instance::~Instance() noexcept
 #endif
 }
 
+void
+Instance::OnStateModified() noexcept
+{
+	if (state_file)
+		state_file->CheckModified();
+}
+
 Partition *
 Instance::FindPartition(const char *name) noexcept
 {
@@ -77,6 +85,20 @@ Instance::FindPartition(const char *name) noexcept
 			return &partition;
 
 	return nullptr;
+}
+
+void
+Instance::DeletePartition(Partition &partition) noexcept
+{
+	// TODO: use boost::intrusive::list to avoid this loop
+	for (auto i = partitions.begin();; ++i) {
+		assert(i != partitions.end());
+
+		if (&*i == &partition) {
+			partitions.erase(i);
+			break;
+		}
+	}
 }
 
 #ifdef ENABLE_DATABASE
@@ -130,15 +152,13 @@ Instance::OnDatabaseSongRemoved(const char *uri) noexcept
 void
 Instance::FoundNeighbor(gcc_unused const NeighborInfo &info) noexcept
 {
-	for (auto &partition : partitions)
-		partition.EmitIdle(IDLE_NEIGHBOR);
+	EmitIdle(IDLE_NEIGHBOR);
 }
 
 void
 Instance::LostNeighbor(gcc_unused const NeighborInfo &info) noexcept
 {
-	for (auto &partition : partitions)
-		partition.EmitIdle(IDLE_NEIGHBOR);
+	EmitIdle(IDLE_NEIGHBOR);
 }
 
 #endif
@@ -170,3 +190,18 @@ Instance::OnRemoteTag(const char *uri, const Tag &tag) noexcept
 }
 
 #endif
+
+void
+Instance::OnIdle(unsigned flags) noexcept
+{
+	/* broadcast to all partitions */
+	for (auto &partition : partitions)
+		partition.EmitIdle(flags);
+}
+
+void
+Instance::FlushCaches() noexcept
+{
+	if (input_cache)
+		input_cache->Flush();
+}

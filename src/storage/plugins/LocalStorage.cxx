@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@ class LocalDirectoryReader final : public StorageDirectoryReader {
 	std::string name_utf8;
 
 public:
-	LocalDirectoryReader(AllocatedPath &&_base_fs)
+	explicit LocalDirectoryReader(AllocatedPath &&_base_fs)
 		:base_fs(std::move(_base_fs)), reader(base_fs) {}
 
 	/* virtual methods from class StorageDirectoryReader */
@@ -146,7 +146,7 @@ LocalStorage::OpenDirectory(const char *uri_utf8)
 
 gcc_pure
 static bool
-SkipNameFS(PathTraitsFS::const_pointer_type name_fs) noexcept
+SkipNameFS(PathTraitsFS::const_pointer name_fs) noexcept
 {
 	return name_fs[0] == '.' &&
 		(name_fs[1] == 0 ||

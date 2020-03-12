@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,8 @@ public:
 	}
 
 protected:
-	virtual void Open() override;
-	virtual size_t ThreadRead(void *ptr, size_t size) override;
+	void Open() override;
+	size_t ThreadRead(void *ptr, size_t size) override;
 
 	void Close() noexcept override {
 		mmsx_close(mms);

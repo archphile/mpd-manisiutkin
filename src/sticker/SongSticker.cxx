@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -82,12 +82,12 @@ struct sticker_song_find_data {
 		     void *user_data);
 	void *user_data;
 };
-}
+} // namespace
 
 static void
 sticker_song_find_cb(const char *uri, const char *value, void *user_data)
 {
-	struct sticker_song_find_data *data =
+	auto *data =
 		(struct sticker_song_find_data *)user_data;
 
 	if (memcmp(uri, data->base_uri, data->base_uri_length) != 0)

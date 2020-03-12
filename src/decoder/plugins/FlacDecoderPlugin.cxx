@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -102,7 +102,7 @@ flac_scan_stream(InputStream &is, TagHandler &handler) noexcept
  * Some glue code around FLAC__stream_decoder_new().
  */
 static FlacStreamDecoder
-flac_decoder_new(void)
+flac_decoder_new()
 {
 	FlacStreamDecoder sd;
 	if(!FLAC__stream_decoder_set_metadata_respond(sd.get(), FLAC__METADATA_TYPE_VORBIS_COMMENT))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@
 #include "CrossFade.hxx"
 #include "tag/Tag.hxx"
 #include "Idle.hxx"
+#include "util/Compiler.h"
 #include "util/Domain.hxx"
 #include "thread/Name.hxx"
 #include "Log.hxx"
@@ -1154,7 +1155,7 @@ try {
 
 	std::unique_lock<Mutex> lock(mutex);
 
-	while (1) {
+	while (true) {
 		switch (command) {
 		case PlayerCommand::SEEK:
 		case PlayerCommand::QUEUE:
@@ -1175,6 +1176,7 @@ try {
 			}
 
 			/* fall through */
+			gcc_fallthrough;
 
 		case PlayerCommand::PAUSE:
 			next_song.reset();

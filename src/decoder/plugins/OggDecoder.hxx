@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 
 #include "lib/xiph/OggVisitor.hxx"
 #include "decoder/Reader.hxx"
+#include "input/Offset.hxx"
 
 class OggDecoder : public OggVisitor {
 	ogg_int64_t end_granulepos;
@@ -35,8 +36,6 @@ public:
 		:OggVisitor(reader),
 		 client(reader.GetClient()),
 		 input_stream(reader.GetInputStream()) {}
-
-	bool Seek(OggSyncState &oy, uint64_t where_frame);
 
 private:
 	/**
@@ -54,6 +53,13 @@ protected:
 	bool IsSeekable() const {
 		return end_granulepos > 0;
 	}
+
+	/**
+	 * Seek the #InputStream and update the #OggVisitor.
+	 *
+	 * Throws on error.
+	 */
+	void SeekByte(offset_type offset);
 
 	void SeekGranulePos(ogg_int64_t where_granulepos);
 };

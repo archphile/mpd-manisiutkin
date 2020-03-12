@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 The Music Player Daemon Project
+ * Copyright 2003-2020 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -41,10 +41,10 @@
 
 #include "RouteFilterPlugin.hxx"
 #include "config/Block.hxx"
-#include "AudioFormat.hxx"
 #include "filter/FilterPlugin.hxx"
 #include "filter/Filter.hxx"
 #include "filter/Prepared.hxx"
+#include "pcm/AudioFormat.hxx"
 #include "pcm/Buffer.hxx"
 #include "pcm/Silence.hxx"
 #include "util/StringStrip.hxx"
@@ -130,7 +130,7 @@ public:
 	 * @param block the configuration block to read
 	 * @param filter a route_filter whose min_channels and sources[] to set
 	 */
-	PreparedRouteFilter(const ConfigBlock &block);
+	explicit PreparedRouteFilter(const ConfigBlock &block);
 
 	/* virtual methods from class PreparedFilter */
 	std::unique_ptr<Filter> Open(AudioFormat &af) override;
@@ -230,14 +230,14 @@ RouteFilter::FilterPCM(ConstBuffer<void> src)
 	const size_t bytes_per_frame_per_channel = input_format.GetSampleSize();
 
 	// A moving pointer that always refers to channel 0 in the input, at the currently handled frame
-	const uint8_t *base_source = (const uint8_t *)src.data;
+	const auto *base_source = (const uint8_t *)src.data;
 
 	// Grow our reusable buffer, if needed, and set the moving pointer
 	const size_t result_size = number_of_frames * output_frame_size;
 	void *const result = output_buffer.Get(result_size);
 
 	// A moving pointer that always refers to the currently filled channel of the currently handled frame, in the output
-	uint8_t *chan_destination = (uint8_t *)result;
+	auto *chan_destination = (uint8_t *)result;
 
 	// Perform our copy operations, with N input channels and M output channels
 	for (unsigned int s=0; s<number_of_frames; ++s) {
